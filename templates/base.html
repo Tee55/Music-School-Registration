@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+
+{% include 'head.html' %}
+
+<style>
+    body {
+        overflow-y: scroll;
+        scroll-behavior: smooth;
+    }
+
+    #loading {
+        position: fixed;
+        height: 100%;
+        width: 100%;
+        top: 40vh;
+        z-index: 1000;
+    }
+
+    .dropdown-menu>.dropdown-item:hover {
+        background-color: transparent;
+    }
+</style>
+
+<body>
+
+    <!-- Navigation section-->
+    {% block navbar %}
+    <section class="navigation">
+
+        <!-- Nav bar-->
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+
+            <!-- Nav bar container-fluid-->
+            <div class="container-fluid">
+
+                <!-- Brand -->
+                <a class="navbar-brand" href="/students">RES</a>
+
+                <!-- Support content button toggle -->
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Support content -->
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
+                        <li class="nav-item">
+                            <a class="nav-link active" aria-current="page" href="/students">รายชื่อนักเรียน</a>
+                        </li>
+                        
+                        <li class="nav-item">
+                            <a class="nav-link active" aria-current="page" href="/teachers">รายชื่ออาจารย์</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link active" aria-current="page" href="/subjects">รายวิชาที่สอน</a>
+                        </li>
+
+                    </ul>
+                </div>
+
+            </div>
+        </nav>
+    </section>
+    {% endblock %}
+
+    <!-- MainBody section-->
+    <main>
+
+        {% block styles %}
+        {% endblock %}
+
+        {% block content %}
+        {% endblock %}
+
+        {% block footer %}
+        {% endblock %}
+
+        <footer class="footer">
+            <div class="position-fixed fixed-bottom">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show m-0" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+                {% endif %}
+                {% endwith %}
+            </div>
+        </footer>
+
+        {% block scripts %}
+        {% endblock %}
+
+    </main>
+
+</body>
+
+</html>

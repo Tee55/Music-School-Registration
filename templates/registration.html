@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col p-3">
+        <div class="card">
+            <div class="card-header">
+                ลงทะเบียนเรียน
+            </div>
+            <div class="card-body">
+                <form action="/registration" method="post">
+
+                    <div class="col-12 mb-3">
+                        <label for="student_id" class="form-label">รหัสนักเรียน</label>
+                        <input type="text" class="form-control" id="student_id" name="student_id"
+                            value="{{student.student_id}}">
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col mb-3">
+                            <label for="title" class="form-label">คำนำหน้า</label>
+                            <select class="form-select" aria-label="title" name="title" value="{{student.title}}">
+                                <option selected>นาย</option>
+                                <option value="1">นาง</option>
+                                <option value="2">นางสาว</option>
+                            </select>
+                        </div>
+
+                        <div class="col mb-3">
+                            <label for="f_name" class="form-label">ชื่อ</label>
+                            <input type="text" class="form-control" id="f_name" name="f_name"
+                                value="{{student.f_name}}">
+                        </div>
+
+                        <div class="col mb-3">
+                            <label for="l_name" class="form-label">นามสกุล</label>
+                            <input type="text" class="form-control" id="l_name" name="l_name"
+                                value="{{student.l_name}}">
+                        </div>
+
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col mb-3">
+                            <label for="subject_id" class="form-label">วิชาที่จะเรียน</label>
+                            <select class="form-select" aria-label="subject" name="subject_id">
+
+                                {% for subject in subjects %}
+                                {% if subject.first %}
+                                <option value="{{subject.subject_id}}" selected>{{ subject.subject_name }}</option>
+                                {% endif %}
+
+                                <option value="{{subject.subject_id}}">{{ subject.subject_name }}</option>
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+                        <div class="col mb-3">
+                            <label for="level_id" class="form-label">ระดับที่จะเรียน</label>
+                            <select class="form-select" aria-label="subject" name="level_id">
+
+                                {% for level in levels %}
+                                {% if level.first %}
+                                <option value="{{level.level_id}}" selected>{{ level.level_name }}</option>
+                                {% endif %}
+
+                                <option value="{{level.level_id}}">{{ level.level_name }}</option>
+                                {% endfor %}
+
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col mb-3">
+                        <label for="time_left" class="form-label">จำนวนครั้งที่จะเรียน</label>
+                        <input type="number" class="form-control" id="time_left" name="time_left">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

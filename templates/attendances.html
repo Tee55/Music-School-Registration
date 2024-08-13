@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="row">
+    <div id="content" class="col p-3">
+        
+        <h2>ประวัติการมาเข้าเรียนของ {{ student.title + " " + student.f_name + " " + student.l_name }}</h2>
+
+        <table id="history_table">
+            <thead>
+                <tr>
+                    <th>id</th>
+                    <th>วันที่มา</th>
+                    <th>ลบ</th>
+                </tr>
+            </thead>
+
+
+            <tbody>
+
+                {% for attendance in attendances %}
+                <tr>
+                    <td>{{ attendance.id }}</td>
+                    <td>{{ attendance.date }}</td>
+                    <td>
+                        <a href="/attendances/{{ attendance.id }}/delete">
+                            <button class="btn btn-danger">ลบ</button>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+
+            </tbody>
+
+
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function () {
+        $('#history_table').DataTable();
+    });
+</script>
+{% endblock %}
