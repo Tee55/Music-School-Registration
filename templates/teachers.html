@@ -5,9 +5,88 @@
 <div class="row">
     <div id="content" class="col p-3">
 
-        <a href="/add_teacher">
-            <button class="btn btn-primary">เพิ่มอาจารย์</button>
-        </a>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add_teacher">เพิ่มอาจารย์</button>
+
+        <div class="modal fade" id="add_teacher" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <form action="/add?category=teacher" method="post">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLabel">เพิ่มอาจารย์</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <h4>ข้อมูลทั่วไป</h4>
+
+                            <div class="col-12 mb-3">
+                                <label for="teacher_id" class="form-label">รหัสอาจารย์</label>
+                                <input type="text" class="form-control" id="teacher_id" name="teacher_id">
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col mb-3">
+                                    <label for="title" class="form-label">คำนำหน้า</label>
+                                    <select class="form-select" aria-label="title" name="title">
+                                        <option selected>นาย</option>
+                                        <option value="1">นาง</option>
+                                        <option value="2">นางสาว</option>
+                                    </select>
+                                </div>
+
+                                <div class="col mb-3">
+                                    <label for="f_name" class="form-label">ชื่อ</label>
+                                    <input type="text" class="form-control" id="f_name" name="f_name">
+                                </div>
+
+                                <div class="col mb-3">
+                                    <label for="l_name" class="form-label">นามสกุล</label>
+                                    <input type="text" class="form-control" id="l_name" name="l_name">
+                                </div>
+
+                                <div class="col mb-3">
+                                    <label for="n_name" class="form-label">ชื่อเล่น</label>
+                                    <input type="text" class="form-control" id="n_name" name="n_name">
+                                </div>
+
+                            </div>
+
+                            <div class="col-12 mb-3">
+                                <label for="address" class="form-label">ที่อยู่</label>
+                                <input type="tel" class="form-control" id="address" name="address">
+                            </div>
+
+                            <div class="col-12 mb-3">
+                                <label for="dob" class="form-label">วันเกิด</label>
+                                <input type="date" class="form-control" id="dob" name="dob">
+                            </div>
+
+                            <div class="col-12 mb-3">
+                                <label for="job" class="form-label">อาชีพ</label>
+                                <input type="text" class="form-control" id="job" name="job">
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col mb-3">
+                                    <label for="email" class="form-label">อีเมล</label>
+                                    <input type="email" class="form-control" id="email" name="email">
+                                </div>
+
+                                <div class="col mb-3">
+                                    <label for="phone_num" class="form-label">เบอร์โทร</label>
+                                    <input type="tel" class="form-control" id="phone_num" name="phone_num">
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Add</button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
 
         <table id="teacher_table">
             <thead>
@@ -16,6 +95,7 @@
                     <th>Name</th>
                     <th>Phone</th>
                     <th>Email</th>
+                    <th>ดูเงินที่ต้องจ่ายให้ครู</th>
                 </tr>
             </thead>
 
@@ -28,6 +108,12 @@
                     <td>{{ teacher.f_name + " " + teacher.l_name + " " }} ({{ teacher.n_name }})</td>
                     <td>{{ teacher.email }}</td>
                     <td>{{ teacher.phone_num }}</td>
+                    <td>
+                        {{ totals[loop.index0] }}
+                        <a href="/teachers/{{ teacher.teacher_id }}">
+                            <button class="btn btn-primary">ประวัติ</button>
+                        </a>
+                    </td>
                 </tr>
                 {% endfor %}
 

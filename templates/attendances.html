@@ -4,8 +4,35 @@
 
 <div class="row">
     <div id="content" class="col p-3">
-        
+
         <h2>ประวัติการมาเข้าเรียนของ {{ student.title + " " + student.f_name + " " + student.l_name }}</h2>
+
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add_attendace">เพิ่มประวัติ</button>
+
+        <div class="modal fade" id="add_attendace" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form action="/attendances/{{ student.student_id }}" method="post">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLabel">เพิ่มประวัติ</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="col-12 mb-3">
+                                <label for="attendance_date" class="form-label">วันที่มา</label>
+                                <input type="date" class="form-control" id="attendance_date" name="attendance_date">
+                            </div>
+                            
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Add</button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
 
         <table id="history_table">
             <thead>

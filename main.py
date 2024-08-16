@@ -28,8 +28,7 @@ def create_database():
     db = get_db()
     c = db.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS students (
-              id INTEGER PRIMARY KEY,
-              student_id INTEGER UNIQUE, 
+              student_id INTEGER PRIMARY KEY UNIQUE, 
               title TEXT,
               f_name TEXT,
               l_name TEXT,
@@ -45,8 +44,7 @@ def create_database():
     )''')
 
     c.execute('''CREATE TABLE IF NOT EXISTS teachers (
-              id INTEGER PRIMARY KEY,
-              teacher_id INTEGER UNIQUE, 
+              teacher_id INTEGER PRIMARY KEY UNIQUE, 
               title TEXT,
               f_name TEXT,
               l_name TEXT,
@@ -57,6 +55,8 @@ def create_database():
               email TEXT,
               phone_num TEXT,
 
+              payment_ratio REAL,
+
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )''')
 
@@ -66,7 +66,7 @@ def create_database():
     )''')
 
     c.execute(
-        '''INSERT INTO subjects (subject_name) VALUES ("เปียโน"), ("ไวโอลิน"), ("กีต้าร์"), ("ดนตรีไทย")''')
+        '''INSERT INTO subjects (subject_name) VALUES ("เปียโนเด็กพื้นฐาน"), ("เปียโนเด็กเดี่ยว (30 นาที)"), ("เปียโนเด็กเดี่ยว (45 นาที)"), ("เปียโนเด็กเดี่ยว (1 ชั่วโมง)"), ("เปียโน"), ("ไวโอลิน"), ("กีต้าร์"), ("ดนตรีไทย")''')
 
     c.execute('''CREATE TABLE IF NOT EXISTS levels (
               level_id INTEGER PRIMARY KEY,
@@ -76,31 +76,27 @@ def create_database():
     c.execute(
         '''INSERT INTO levels (level_name) VALUES ("Beginner"), ("Intermediate"), ("Advanced")''')
 
-    c.execute('''CREATE TABLE IF NOT EXISTS students_subjects (
+    c.execute('''CREATE TABLE IF NOT EXISTS registration (
               id INTEGER PRIMARY KEY,
               student_id INTEGER,
               subject_id INTEGER,
               level_id INTEGER,
+              teacher_id INTEGER,
               time_left INTEGER DEFAULT 4,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+              in_stock_times INTEGER DEFAULT 0,
 
               FOREIGN KEY (student_id) REFERENCES students(student_id),
-              FOREIGN KEY (subject_id) REFERENCES subjects(subject_id)
-    )''')
-
-    c.execute('''CREATE TABLE IF NOT EXISTS teachers_subjects (
-              id INTEGER PRIMARY KEY,
-              teacher_id INTEGER, 
-              subject_id INTEGER,
-
+              FOREIGN KEY (subject_id) REFERENCES subjects(subject_id),
               FOREIGN KEY (teacher_id) REFERENCES teachers(teacher_id),
-              FOREIGN KEY (subject_id) REFERENCES subjects(subject_id)
+              FOREIGN KEY (level_id) REFERENCES levels(level_id)
     )''')
 
     c.execute('''CREATE TABLE IF NOT EXISTS attendance (
               id INTEGER PRIMARY KEY,
               student_id INTEGER, 
               date DATE,
+              created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               FOREIGN KEY (student_id) REFERENCES students(student_id)
     )''')
 
@@ -108,10 +104,38 @@ def create_database():
               id INTEGER PRIMARY KEY,
               subject_id INTEGER,
               level_id INTEGER,
-              price INTEGER
+              price INTEGER,
+
+              FOREIGN KEY (subject_id) REFERENCES subjects(subject_id),
+              FOREIGN KEY (level_id) REFERENCES levels(level_id)
     )''')
 
-    # Piano
+    c.execute('''CREATE TABLE IF NOT EXISTS accounts (
+        id INTEGER PRIMARY KEY,
+        teacher_id INTEGER,
+        attendance_id INTEGER,
+        student_id INTEGER,
+        subject_id INTEGER,
+        level_id INTEGER,
+        amount INTEGER,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+              
+        FOREIGN KEY (teacher_id) REFERENCES teachers(teacher_id),
+        FOREIGN KEY (attendance_id) REFERENCES attendance(id)
+    )''')
+
+    # Data for testing
+    c.execute('''INSERT INTO students (student_id, title, f_name, l_name) VALUES (123, "นาย", "สมชาย", "สมหญิง")''')
+    c.execute('''INSERT INTO teachers (teacher_id, title, f_name, l_name, payment_ratio) VALUES (987, "นาย", "Teerapath", "Sattabongkot", 0.5)''')
+    c.execute('''INSERT INTO registration (student_id, subject_id, level_id, teacher_id) VALUES (123, 1, 1, 987)''')
+    
+    c.execute('''INSERT INTO attendance (student_id, date) VALUES (123, "2024-08-17")''')
+    c.execute('''INSERT INTO attendance (student_id, date) VALUES (123, "2024-08-18")''')
+    c.execute('''INSERT INTO attendance (student_id, date) VALUES (123, "2024-08-19")''')
+    c.execute('''INSERT INTO attendance (student_id, date) VALUES (123, "2024-08-20")''')
+    c.execute('''INSERT INTO attendance (student_id, date) VALUES (123, "2024-08-21")''')
+
+    # เปียโนเด็กพื้นฐาน
     c.execute('''INSERT INTO payments (subject_id, level_id, price) VALUES (1, 1, 2800), (1, 2, 3200), (1, 3, 3400)''')
 
     # Violin
@@ -172,8 +196,50 @@ def teachers():
     teachers = c.fetchall()
     db.close()
 
-    return render_template('teachers.html', teachers=teachers)
+    totals = []
+    for teacher in teachers:
+        teacher_id = teacher[0]
 
+        # Get accounts
+        db = get_db()
+        c = db.cursor()
+        c.execute("SELECT * FROM accounts WHERE teacher_id = ? and strftime('%m', created_at) = ?", (teacher_id, date.today().strftime('%m')))
+        rows = c.fetchall()
+        db.close()
+
+        if len(rows) == 0:
+            flash("ไม่มีเงินที่ต้องจ่าย", "warning")
+            return redirect(url_for('teachers'))
+
+        total = 0
+        for row in rows:
+            amount = row[6]
+            total += amount
+
+        totals.append(total)
+
+    return render_template('teachers.html', teachers=teachers, totals=totals)
+
+@app.route("/teachers/<teacher_id>", methods=['GET', 'POST'])
+def teachers_payments(teacher_id):
+
+    # Get accounts
+    db = get_db()
+    c = db.cursor()
+    c.execute("SELECT * FROM accounts WHERE teacher_id = ? and strftime('%m', created_at) = ?", (teacher_id, date.today().strftime('%m')))
+    rows = c.fetchall()
+    db.close()
+
+    if len(rows) == 0:
+        flash("ไม่มีเงินที่ต้องจ่าย", "warning")
+        return redirect(url_for('teachers'))
+
+    total = 0
+    for row in rows:
+        amount = row[6]
+        total += amount
+        
+    return render_template('teachers_payments.html', rows=rows, total=total)
 
 @app.route("/add", methods=['GET', 'POST'])
 def add():
@@ -240,22 +306,6 @@ def add():
     else:
         return redirect(url_for('students'))
 
-
-@app.route("/add_student", methods=['GET', 'POST'])
-def add_student():
-    return render_template('add_student.html')
-
-
-@app.route("/add_teacher", methods=['GET', 'POST'])
-def add_teacher():
-    return render_template('add_teacher.html')
-
-
-@app.route("/add_subject", methods=['GET', 'POST'])
-def add_subject():
-    return render_template('add_subject.html')
-
-
 @app.route("/registration", methods=['GET', 'POST'])
 def registration():
 
@@ -263,12 +313,13 @@ def registration():
         student_id = request.form['student_id']
         subject_id = request.form['subject_id']
         level_id = request.form['level_id']
+        teacher_id = request.form['teacher_id']
         time_left = request.form['time_left']
 
         db = get_db()
         c = db.cursor()
-        c.execute("INSERT INTO students_subjects (student_id, subject_id, level_id, time_left) VALUES (?, ?, ?, ?)",
-                  (student_id, subject_id, level_id, time_left))
+        c.execute("INSERT INTO registration (student_id, subject_id, level_id, teacher_id, time_left) VALUES (?, ?, ?, ?, ?)",
+                  (student_id, subject_id, level_id, teacher_id, time_left))
         db.commit()
         db.close()
 
@@ -305,8 +356,15 @@ def registration():
     if len(levels) == 0:
         flash("ไม่มีข้อมูลระดับ", "warning")
         return redirect(url_for('students'))
+    
+    # Get teachers
+    db = get_db()
+    c = db.cursor()
+    c.execute("SELECT * FROM teachers")
+    teachers = c.fetchall()
+    db.close()
 
-    return render_template('registration.html', student=student, subjects=subjects, levels=levels)
+    return render_template('registration.html', student=student, subjects=subjects, levels=levels, teachers=teachers)
 
 @app.route("/history/<student_id>", methods=['GET', 'POST'])
 def history(student_id):
@@ -324,7 +382,7 @@ def history(student_id):
 
     db = get_db()
     c = db.cursor()
-    c.execute("SELECT * FROM students_subjects JOIN subjects JOIN levels ON students_subjects.subject_id = subjects.subject_id AND students_subjects.level_id = levels.level_id WHERE students_subjects.student_id = ?", (student_id,))
+    c.execute("SELECT * FROM registration JOIN subjects JOIN levels ON registration.subject_id = subjects.subject_id AND registration.level_id = levels.level_id WHERE registration.student_id = ?", (student_id,))
     history = c.fetchall()
     db.close()
 
@@ -360,7 +418,7 @@ def recipt(student_id, subject_id, level_id):
     db = get_db()
     c = db.cursor()
     c.execute(
-        "SELECT * FROM students_subjects WHERE student_id = ? and subject_id = ? and level_id = ?", (student_id, subject_id, level_id))
+        "SELECT * FROM registration WHERE student_id = ? and subject_id = ? and level_id = ?", (student_id, subject_id, level_id))
     data = c.fetchone()
     db.close()
 
@@ -408,39 +466,67 @@ def attendance():
     if request.method == 'POST':
         student_id = request.form['student_id']
 
-        # Check if attendance is already recorded
+        # Add attendance
         db = get_db()
         c = db.cursor()
-        c.execute("SELECT * FROM attendance WHERE student_id = ? AND date = ?",
-                  (student_id, date.today()))
-        attendance = c.fetchone()
+        c.execute("INSERT INTO attendance (student_id, date) VALUES (?, ?)",
+                    (student_id, date.today()))
+        attendance_id = c.lastrowid
+        c.execute(
+            '''UPDATE registration SET time_left = time_left - 1 WHERE student_id = ?''', (student_id, ))
+        db.commit()
         db.close()
 
-        if attendance:
-            # Remove attendance
+        # Count attendance
+        db = get_db()
+        c = db.cursor()
+        c.execute("SELECT * FROM attendance WHERE student_id = ? and strftime('%m', date) = ?", (student_id, date.today().strftime('%m')))
+        rows = c.fetchall()
+        db.close()
+
+        attendance_count = len(rows)
+
+        if attendance_count != 0 and attendance_count % 4 == 0:
+
+            # Add money to teacher account
+
+            # Get all subjects that the student is registered
             db = get_db()
             c = db.cursor()
-            c.execute("DELETE FROM attendance WHERE student_id = ? AND date = ?",
-                      (student_id, date.today()))
             c.execute(
-                '''UPDATE students_subjects SET time_left = time_left + 1 WHERE student_id = ?''', (student_id, ))
-            db.commit()
+                "SELECT * FROM registration WHERE student_id = ?", (student_id, ))
+            rows = c.fetchall()
             db.close()
 
-            return jsonify({'message': 'success'})
+            for row in rows:
+                subject_id = row[2]
+                level_id = row[3]
+                teacher_id = row[4]
 
-        else:
-            # Add attendance
-            db = get_db()
-            c = db.cursor()
-            c.execute("INSERT INTO attendance (student_id, date) VALUES (?, ?)",
-                      (student_id, date.today()))
-            c.execute(
-                '''UPDATE students_subjects SET time_left = time_left - 1 WHERE student_id = ?''', (student_id, ))
-            db.commit()
-            db.close()
+                # Get teacher ratio
+                db = get_db()
+                c = db.cursor()
+                c.execute(
+                    "SELECT payment_ratio FROM teachers WHERE teacher_id = ?", (teacher_id, ))
+                teacher = c.fetchone()
+                db.close()
 
-            return jsonify({'message': 'success'})
+                # Get subject price
+                db = get_db()
+                c = db.cursor()
+                c.execute('''SELECT price FROM payments WHERE subject_id = ? and level_id = ?''', (subject_id, level_id))
+                payment = c.fetchone()
+                db.close()
+
+                # Add amount to accounts
+                db = get_db()
+                c = db.cursor()
+                c.execute("INSERT INTO accounts (teacher_id, attendance_id, student_id, subject_id, level_id, amount) VALUES (?, ?, ?, ?, ?, ?)",
+                        (teacher_id, attendance_id, student_id, subject_id, level_id, payment[0] * teacher[0]))
+                db.commit()
+                db.close()
+            
+        return jsonify({'message': 'success'})
 
 @app.route("/attendances/<student_id>", methods=['GET', 'POST'])
 def attendances(student_id):
@@ -479,6 +565,13 @@ def attendance_delete(attendance_id):
     db.commit()
     db.close()
 
+    # Remove money from accounts
+    db = get_db()
+    c = db.cursor()
+    c.execute("DELETE FROM accounts WHERE attendance_id = ?", (attendance_id,))
+    db.commit()
+    db.close()
+
     flash("ลบประวัติการเข้าเรียนเรียบร้อยแล้ว", "success")
     return redirect(url_for('students'))
 
@@ -511,28 +604,35 @@ def generate_pdf():
         c.drawCentredString(width / 2, height - 140, "ศุภนิจการดนตรี")
 
         c.setFont("THSarabunNEW", 10)
-        c.drawCentredString(width / 2, height - 150, "55/9 ถนนวัชรพล แขวงท่าแร้ง เขตบางเขน กรุงเทพฯ")
-        c.drawCentredString(width / 2, height - 160, "โทร. 02-948 2644")
+        c.drawCentredString(width / 2, height - 160, "55/9 ถนนวัชรพล แขวงท่าแร้ง เขตบางเขน กรุงเทพฯ")
+        c.drawCentredString(width / 2, height - 170, "โทร. 02-948 2644")
         
         c.setFont("THSarabunNEW", 16)
-        c.drawCentredString(width / 2, height - 180, "SUPANIT MUSIC ACADEMY")
+        c.drawCentredString(width / 2, height - 190, "SUPANIT MUSIC ACADEMY")
         
-        c.setFont("THSarabunNEW", 12)
-        c.drawString(400, height - 200, "วันที่:")
-        c.drawString(450, height - 200, date.today().strftime("%d/%m/%Y"))
+        c.drawString(400, height - 220, "วันที่:")
+        c.drawString(450, height - 220, date.today().strftime("%d/%m/%Y"))
         
-        c.drawString(400, height - 220, "เลขที่:")
-        c.drawString(450, height - 220, "5410090863")
+        c.drawString(400, height - 240, "เลขที่:")
+        c.drawString(450, height - 240, "5410090863")
         
-        c.setFont("THSarabunNEW", 12)
-        c.drawString(60, height - 240, "ได้รับเงินจาก:")
-        c.drawString(120, height - 240, title + " " + f_name + " " + l_name)
+        c.drawString(60, height - 260, "ได้รับเงินจาก:")
+        c.drawString(120, height - 260, title + " " + f_name + " " + l_name)
         
-        c.setFont("THSarabunNEW", 12)
-        c.drawString(200, height - 240, "วิชา:")
-        c.drawString(260, height - 240, subject)
+        c.drawString(240, height - 260, "วิชา:")
+        c.drawString(300, height - 260, subject)
+
+        c.drawString(60, height - 280, "ชำระสำหรับ:")
+        c.drawString(120, height - 280, "ค่าเรียน" + " " + time_left + " " + "ครั้ง")
+
+        c.drawString(240, height - 280, "จำนวนเงิน:")
+        c.drawString(300, height - 280, pay_amount)
+
+
+        c.setFont("THSarabunNEW", 16)
+        c.drawCentredString(width / 2, height - 460, "ใบเสร็จรับเงินที่ถูกต้อง จะต้องมีลายเซ็นของเจ้าหน้าที่ผู้รับมอบอำนาจ และประทับตราโรงเรียน")
         
-        c.rect(50, height - 480, width - 100, 450, stroke=1, fill=0)
+        c.rect(50, height - 480, width - 80, 450, stroke=1, fill=0)
         
         c.showPage()
         c.save()

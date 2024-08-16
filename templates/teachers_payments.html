@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="row">
+    <div id="content" class="col p-3">
+        <table id="student_table">
+            <thead>
+                <tr>
+                    <th>รหัสนักเรียน</th>
+                    <th>วิชาที่เรียน</th>
+                    <th>ระดับที่เรียน</th>
+                    <th>จำนวน</th>
+                </tr>
+            </thead>
+
+
+            <tbody>
+
+                {% for row in rows %}
+                <tr>
+                    <td>{{ row[3] }}</td>
+                    <td>{{ row[4] }}</td>
+                    <td>{{ row[5] }}</td>
+                    <td>{{ row[6] }}</td>
+                </tr>
+                {% endfor %}
+
+            </tbody>
+
+
+        </table>
+
+        <h4>Total: {{ total }}</h4>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function () {
+        $('#student_table').DataTable();
+
+        $('#attendance').change(function () {
+            var student_id = $(this).val();
+            $.ajax({
+                type: "POST",
+                url: "/attendance",
+                data: {
+                    student_id: student_id,
+                },
+                success: function (data) {
+                    console.log(data);
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

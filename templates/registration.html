@@ -20,7 +20,7 @@
                     <div class="row mb-3">
                         <div class="col mb-3">
                             <label for="title" class="form-label">คำนำหน้า</label>
-                            <select class="form-select" aria-label="title" name="title" value="{{student.title}}">
+                            <select class="form-select" name="title" value="{{student.title}}">
                                 <option selected>นาย</option>
                                 <option value="1">นาง</option>
                                 <option value="2">นางสาว</option>
@@ -44,7 +44,7 @@
                     <div class="row mb-3">
                         <div class="col mb-3">
                             <label for="subject_id" class="form-label">วิชาที่จะเรียน</label>
-                            <select class="form-select" aria-label="subject" name="subject_id">
+                            <select class="form-select" name="subject_id">
 
                                 {% for subject in subjects %}
                                 {% if subject.first %}
@@ -60,7 +60,7 @@
 
                         <div class="col mb-3">
                             <label for="level_id" class="form-label">ระดับที่จะเรียน</label>
-                            <select class="form-select" aria-label="subject" name="level_id">
+                            <select class="form-select" name="level_id">
 
                                 {% for level in levels %}
                                 {% if level.first %}
@@ -72,6 +72,23 @@
 
                             </select>
                         </div>
+                    </div>
+
+                    <div class="col mb-3">
+                        <label for="teacher_id" class="form-label">อาจารย์ที่สอน</label>
+                        <select class="form-select" name="teacher_id">
+
+                            {% for teacher in teachers %}
+                            {% if teacher.first %}
+                            <option value="{{teachers.teacher_id}}" selected>{{ teacher.title + " " + teacher.f_name + "
+                                " + teacher.l_name }}</option>
+                            {% endif %}
+
+                            <option value="{{teachers.teacher_id}}">{{ teacher.title + " " + teacher.f_name + " " +
+                                teacher.l_name }}</option>
+                            {% endfor %}
+
+                        </select>
                     </div>
 
                     <div class="col mb-3">
