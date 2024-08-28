@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="row">
+    <div id="content" class="col p-3">
+
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add_level">เพิ่มระดับที่สอน</button>
+
+        <div class="modal fade" id="add_level" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <form action="/add?category=level" method="post">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLabel">เพิ่มระดับที่สอน</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="col mb-3">
+                                <label for="level_name" class="form-label">ชื่อระดับ</label>
+                                <input type="text" class="form-control" id="level_name" name="level_name">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Add</button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+
+        <table id="level_table">
+            <thead>
+                <tr>
+                    <th>id</th>
+                    <th>ชื่อระดับ</th>
+                    <th>ลบ</th>
+                </tr>
+            </thead>
+
+
+            <tbody>
+
+                {% for level in levels %}
+                <tr>
+                    <td>{{ level.level_id }}</td>
+                    <td>{{ level.level_name }}</td>
+                    <td>
+                        <a href="/levels/{{ level.level_id }}/delete">
+                            <button class="btn btn-danger">ลบ</button>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+
+            </tbody>
+
+
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function () {
+        $('#level_table').DataTable();
+    });
+</script>
+{% endblock %}

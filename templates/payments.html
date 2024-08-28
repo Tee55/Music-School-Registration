@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="row">
+    <div id="content" class="col p-3">
+
+        <h2>อัตราค่าเรียนของวิชา {{ subject.subject_name }}</h2>
+
+        
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add_payment">เพิ่มระดับที่สอน</button>
+
+        <div class="modal fade" id="add_payment" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <form action="/add?category=payment" method="post">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLabel">ระดับ</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+
+                            <div class="col mb-3">
+                                <label for="subject_id" class="form-label">รหัสวิชา</label>
+                                <input type="number" class="form-control" id="subject_id" name="subject_id" value="{{ subject.subject_id }}">
+                            </div>
+
+                            <div class="col mb-3">
+                                <label for="level_id" class="form-label">ชื่อระดับ</label>
+                                <select class="form-select" id="level_id" name="level_id">
+
+                                    {% for level in levels %}
+                                    {% if level.first %}
+                                    <option value="{{level.level_id}}" selected>{{ level.level_name }}</option>
+                                    {% endif %}
+    
+                                    <option value="{{level.level_id}}">{{ level.level_name }}</option>
+                                    {% endfor %}
+    
+                                </select>
+                            </div>
+
+                            <div class="col mb-3">
+                                <label for="price" class="form-label">ราคา</label>
+                                <input type="number" class="form-control" id="price" name="price" placeholder="ราคา">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Add</button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+
+
+
+        <table id="payment_table">
+            <thead>
+                <tr>
+                    <th>ระดับ</th>
+                    <th>ราคา (4 ครั้ง)</th>
+                    <th>ลบ</th>
+                </tr>
+            </thead>
+
+
+            <tbody>
+
+                {% for payment in payments %}
+                <tr>
+                    <td>{{ payment.level_name }}</td>
+                    <td>{{ payment.price }}</td>
+                    <td>
+                        <a href="/payments/{{ payment.payment_id }}/delete">
+                            <button class="btn btn-danger">ลบ</button>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+
+            </tbody>
+
+
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function () {
+        $('#payment_table').DataTable();
+    });
+</script>
+{% endblock %}

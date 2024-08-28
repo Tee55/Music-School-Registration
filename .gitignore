@@ -2,3 +2,8 @@ env/
 build/
 dist/
 *.db
+PyInstaller/
+*.log
+*.spec
+*.exe
+static/

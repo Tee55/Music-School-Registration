@@ -15,7 +15,7 @@ import threading
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
-DATABASE = os.path.join(os.path.dirname(__file__), 'database', 'database.db')
+DATABASE = './database.db'
 
 def get_db():
     conn = sqlite3.connect(DATABASE)
@@ -77,7 +77,7 @@ def create_database():
         '''INSERT INTO levels (level_name) VALUES ("Beginner"), ("Intermediate"), ("Advanced")''')
 
     c.execute('''CREATE TABLE IF NOT EXISTS registration (
-              id INTEGER PRIMARY KEY,
+              registration_id INTEGER PRIMARY KEY,
               student_id INTEGER,
               subject_id INTEGER,
               level_id INTEGER,
@@ -93,7 +93,7 @@ def create_database():
     )''')
 
     c.execute('''CREATE TABLE IF NOT EXISTS attendance (
-              id INTEGER PRIMARY KEY,
+              attendance_id INTEGER PRIMARY KEY,
               student_id INTEGER, 
               date DATE,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -101,7 +101,7 @@ def create_database():
     )''')
 
     c.execute('''CREATE TABLE IF NOT EXISTS payments (
-              id INTEGER PRIMARY KEY,
+              payment_id INTEGER PRIMARY KEY,
               subject_id INTEGER,
               level_id INTEGER,
               price INTEGER,
@@ -111,7 +111,7 @@ def create_database():
     )''')
 
     c.execute('''CREATE TABLE IF NOT EXISTS accounts (
-        id INTEGER PRIMARY KEY,
+        account_id INTEGER PRIMARY KEY,
         teacher_id INTEGER,
         attendance_id INTEGER,
         student_id INTEGER,
@@ -207,16 +207,14 @@ def teachers():
         rows = c.fetchall()
         db.close()
 
-        if len(rows) == 0:
-            flash("ไม่มีเงินที่ต้องจ่าย", "warning")
-            return redirect(url_for('teachers'))
+        if len(rows) != 0:
 
-        total = 0
-        for row in rows:
-            amount = row[6]
-            total += amount
+            total = 0
+            for row in rows:
+                amount = row[6]
+                total += amount
 
-        totals.append(total)
+            totals.append(total)
 
     return render_template('teachers.html', teachers=teachers, totals=totals)
 
@@ -230,14 +228,11 @@ def teachers_payments(teacher_id):
     rows = c.fetchall()
     db.close()
 
-    if len(rows) == 0:
-        flash("ไม่มีเงินที่ต้องจ่าย", "warning")
-        return redirect(url_for('teachers'))
-
     total = 0
-    for row in rows:
-        amount = row[6]
-        total += amount
+    if len(rows) != 0:
+        for row in rows:
+            amount = row[6]
+            total += amount
         
     return render_template('teachers_payments.html', rows=rows, total=total)
 
@@ -303,8 +298,136 @@ def add():
             db.close()
 
             return redirect(url_for('subjects'))
+        elif category == "level":
+
+            level_name = request.form['level_name']
+
+            db = get_db()
+            c = db.cursor()
+            c.execute('''INSERT INTO levels (level_name)
+                    VALUES (?)''', (level_name,))
+            db.commit()
+            db.close()
+
+            return redirect(url_for('levels'))
+        
+        elif category == "payment":
+            
+            subject_id = request.form['subject_id']
+            level_id = request.form['level_id']
+            price = request.form['price']
+
+            db = get_db()
+            c = db.cursor()
+            c.execute("INSERT INTO payments (subject_id, level_id, price) VALUES (?, ?, ?)", (subject_id, level_id, price))
+            db.commit()
+            db.close()
+
+            return redirect(url_for('payments'), subject_id=subject_id)
+
     else:
         return redirect(url_for('students'))
+    
+@app.route("/delete", methods=['GET', 'POST'])
+def delete():
+
+    if request.method == 'POST':
+
+        category = request.args.get('category')
+
+        if category == "student":
+
+            student_id = request.form['student_id']
+
+            db = get_db()
+            c = db.cursor()
+            c.execute("DELETE FROM students WHERE student_id = ?", (student_id,))
+            db.commit()
+            db.close()
+
+            flash("ลบนักเรียนเรียบร้อยแล้ว", "success")
+
+            return redirect(url_for('students'))
+
+        elif category == "teacher":
+
+            teacher_id = request.form['teacher_id']
+            
+            db = get_db()
+            c = db.cursor()
+            c.execute("DELETE FROM teachers WHERE teacher_id = ?", (teacher_id,))
+            db.commit()
+            db.close()
+
+            flash("ลบอาจารย์เรียบร้อยแล้ว", "success")
+
+            return redirect(url_for('teachers'))
+
+        elif category == "subject":
+
+            subject_id = request.form['subject_id']
+
+            db = get_db()
+            c = db.cursor()
+            c.execute("DELETE FROM subjects WHERE subject_id = ?", (subject_id,))
+            db.commit()
+            db.close()
+
+            flash("ลบรายวิชาเรียบร้อยแล้ว", "success")
+
+            return redirect(url_for('subjects'))
+        
+        elif category == "level":
+
+            level_id = request.form['level_id']
+
+            db = get_db()
+            c = db.cursor()
+            c.execute("DELETE FROM levels WHERE level_id = ?", (level_id,))
+            db.commit()
+            db.close()
+
+            flash("ลบระดับชั้นเรียบร้อยแล้ว", "success")
+
+            return redirect(url_for('levels'))
+        
+        elif category == "attendence":
+
+            attendance_id = request.form['attendance_id']
+
+            # Delete attendance
+            db = get_db()
+            c = db.cursor()
+            c.execute("DELETE FROM attendance WHERE id = ?", (attendance_id,))
+            db.commit()
+            db.close()
+
+            # Remove money from accounts
+            db = get_db()
+            c = db.cursor()
+            c.execute("DELETE FROM accounts WHERE attendance_id = ?", (attendance_id,))
+            db.commit()
+            db.close()
+
+            flash("ลบประวัติการเข้าเรียนเรียบร้อยแล้ว", "success")
+            return redirect(url_for('students'))
+        
+        elif category == "payment":
+
+            payment_id = request.form['payment_id']
+
+            db = get_db()
+            c = db.cursor()
+            c.execute("DELETE FROM payments WHERE payment_id = ?", (payment_id,))
+            db.commit()
+            db.close()
+
+            flash("ลบเรียบร้อยแล้ว", "success")
+
+            return redirect(url_for('students'))
+    else:
+        return redirect(url_for('students'))
+
 
 @app.route("/registration", methods=['GET', 'POST'])
 def registration():
@@ -390,7 +513,6 @@ def history(student_id):
 
 @app.route("/subjects", methods=['GET', 'POST'])
 def subjects():
-
     db = get_db()
     c = db.cursor()
     c.execute("SELECT * FROM subjects")
@@ -398,7 +520,6 @@ def subjects():
     db.close()
 
     return render_template('subjects.html', subjects=subjects)
-
 
 @app.route("/recipt/<student_id>/<subject_id>/<level_id>", methods=['GET', 'POST'])
 def recipt(student_id, subject_id, level_id):
@@ -426,7 +547,8 @@ def recipt(student_id, subject_id, level_id):
         flash("ไม่มีใบเสร็จตามข้อมูลดังกล่าว", "warning")
         return redirect(url_for('students'))
 
-    time_left = data[4]
+    time_left = data[5]
+    print(time_left)
 
     # Get subject data
     db = get_db()
@@ -555,25 +677,47 @@ def attendances(student_id):
               
     return render_template('attendances.html', student=student, attendances=attendances)
 
-@app.route("/attendances/<attendance_id>/delete", methods=['GET', 'POST'])
-def attendance_delete(attendance_id):
+# Show all levels
+@app.route("/levels", methods=['GET', 'POST'])
+def levels():
 
-    # Delete attendance
     db = get_db()
     c = db.cursor()
-    c.execute("DELETE FROM attendance WHERE id = ?", (attendance_id,))
-    db.commit()
+    c.execute("SELECT * FROM levels")
+    levels = c.fetchall()
     db.close()
 
-    # Remove money from accounts
+    return render_template('levels.html', levels=levels)
+
+# See price according to subject_id
+@app.route("/payments/<subject_id>", methods=['GET', 'POST'])
+def payments(subject_id):
+
     db = get_db()
     c = db.cursor()
-    c.execute("DELETE FROM accounts WHERE attendance_id = ?", (attendance_id,))
-    db.commit()
+    c.execute("SELECT * FROM payments JOIN levels ON payments.level_id = levels.level_id WHERE subject_id = ?", (subject_id,))
+    payments = c.fetchall()
     db.close()
 
-    flash("ลบประวัติการเข้าเรียนเรียบร้อยแล้ว", "success")
-    return redirect(url_for('students'))
+    # Get subject name
+    db = get_db()
+    c = db.cursor()
+    c.execute("SELECT * FROM subjects WHERE subject_id = ?", (subject_id,))
+    subject = c.fetchone()
+    db.close()
+
+    # Get levels
+    db = get_db()
+    c = db.cursor()
+    c.execute("SELECT * FROM levels")
+    levels = c.fetchall()
+    db.close()
+
+    return render_template('payments.html', payments=payments, subject=subject, levels=levels)
+
+@app.route('/save-db', methods=['GET', 'POST'])
+def save_db():
+    pass
 
 @app.route('/generate-pdf', methods=['GET', 'POST'])
 def generate_pdf():

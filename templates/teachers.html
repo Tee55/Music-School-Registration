@@ -96,6 +96,7 @@
                     <th>Phone</th>
                     <th>Email</th>
                     <th>ดูเงินที่ต้องจ่ายให้ครู</th>
+                    <th></th>
                 </tr>
             </thead>
 
@@ -112,6 +113,11 @@
                         {{ totals[loop.index0] }}
                         <a href="/teachers/{{ teacher.teacher_id }}">
                             <button class="btn btn-primary">ประวัติ</button>
+                        </a>
+                    </td>
+                    <td>
+                        <a href="/teachers/{{ teacher.teacher_id }}/delete">
+                            <button class="btn btn-danger">ลบ</button>
                         </a>
                     </td>
                 </tr>
