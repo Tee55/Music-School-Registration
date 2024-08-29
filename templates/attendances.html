@@ -5,7 +5,7 @@
 <div class="row">
     <div id="content" class="col p-3">
 
-        <h2>ประวัติการมาเข้าเรียนของ {{ student.title + " " + student.f_name + " " + student.l_name }}</h2>
+        <h2>ประวัติการมาเข้าเรียนของ {{ student.title + " " + student.f_name + " " + student.l_name + " " }} ({{ student.n_name }})</h2>
 
         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add_attendace">เพิ่มประวัติ</button>
 
@@ -14,7 +14,7 @@
                 <div class="modal-content">
                     <form action="/attendances/{{ student.student_id }}" method="post">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="exampleModalLabel">เพิ่มประวัติ</h5>
+                            <h5 class="modal-title">เพิ่มประวัติ</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
@@ -25,8 +25,8 @@
                             
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="submit" class="btn btn-primary">Add</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+                            <button type="submit" class="btn btn-primary">เพิ่ม</button>
                         </div>
                     </form>
 
@@ -48,10 +48,10 @@
 
                 {% for attendance in attendances %}
                 <tr>
-                    <td>{{ attendance.id }}</td>
+                    <td>{{ attendance.attendance_id }}</td>
                     <td>{{ attendance.date }}</td>
                     <td>
-                        <a href="/attendances/{{ attendance.id }}/delete">
+                        <a href="/delete/attendance?student_id={{ student.student_id }}&subject_id={{ attendance.subject_id }}&level_id={{ attendance.level_id }}&attendance_id={{ attendance.attendance_id }}">
                             <button class="btn btn-danger">ลบ</button>
                         </a>
                     </td>

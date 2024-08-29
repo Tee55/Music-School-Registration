@@ -10,10 +10,10 @@
         <div class="modal fade" id="add_level" tabindex="-1">
             <div class="modal-dialog modal-xl">
                 <div class="modal-content">
-                    <form action="/add?category=level" method="post">
+                    <form action="/add/level" method="post">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="exampleModalLabel">เพิ่มระดับที่สอน</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <h5 class="modal-title">เพิ่มระดับที่สอน</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
                             <div class="col mb-3">
@@ -22,8 +22,8 @@
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="submit" class="btn btn-primary">Add</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+                            <button type="submit" class="btn btn-primary">เพิ่ม</button>
                         </div>
                     </form>
 
@@ -48,7 +48,7 @@
                     <td>{{ level.level_id }}</td>
                     <td>{{ level.level_name }}</td>
                     <td>
-                        <a href="/levels/{{ level.level_id }}/delete">
+                        <a href="/delete/level?level_id={{ level.level_id }}">
                             <button class="btn btn-danger">ลบ</button>
                         </a>
                     </td>

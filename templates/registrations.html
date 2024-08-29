@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="row">
+    <div id="content" class="col p-3">
+
+        <h2>ประวัติการลงวิชาของ {{ student.title + " " + student.f_name + " " + student.l_name }}</h2>
+
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add_registration">ลงวิชาเพิ่ม</button>
+
+        <div class="modal fade" id="add_registration" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <form action="/add/registration" method="post">
+                        <div class="modal-header">
+                            <h5 class="modal-title">ข้อมูลที่จะลง</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        
+                        <div class="modal-body">
+                            <div class="col-12 mb-3">
+                                <label for="student_id" class="form-label">รหัสนักเรียน</label>
+                                <input type="text" class="form-control" id="student_id" name="student_id"
+                                    value="{{student.student_id}}">
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col mb-3">
+                                    <label for="title" class="form-label">คำนำหน้า</label>
+                                    <select class="form-select" name="title" value="{{student.title}}">
+                                        <option selected>นาย</option>
+                                        <option value="1">นาง</option>
+                                        <option value="2">นางสาว</option>
+                                    </select>
+                                </div>
+
+                                <div class="col mb-3">
+                                    <label for="f_name" class="form-label">ชื่อ</label>
+                                    <input type="text" class="form-control" id="f_name" name="f_name"
+                                        value="{{student.f_name}}">
+                                </div>
+
+                                <div class="col mb-3">
+                                    <label for="l_name" class="form-label">นามสกุล</label>
+                                    <input type="text" class="form-control" id="l_name" name="l_name"
+                                        value="{{student.l_name}}">
+                                </div>
+
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col mb-3">
+                                    <label for="subject_id" class="form-label">วิชาที่จะเรียน</label>
+                                    <select class="form-select" name="subject_id">
+
+                                        {% for subject in subjects %}
+                                        {% if subject.first %}
+                                        <option value="{{subject.subject_id}}" selected>{{ subject.subject_name }}
+                                        </option>
+                                        {% endif %}
+
+                                        <option value="{{subject.subject_id}}">{{ subject.subject_name }}</option>
+                                        {% endfor %}
+
+                                    </select>
+
+                                </div>
+
+                                <div class="col mb-3">
+                                    <label for="level_id" class="form-label">ระดับที่จะเรียน</label>
+                                    <select class="form-select" name="level_id">
+
+                                        {% for level in levels %}
+                                        {% if level.first %}
+                                        <option value="{{level.level_id}}" selected>{{ level.level_name }}</option>
+                                        {% endif %}
+
+                                        <option value="{{level.level_id}}">{{ level.level_name }}</option>
+                                        {% endfor %}
+
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col mb-3">
+                                <label for="teacher_id" class="form-label">อาจารย์ที่สอน</label>
+                                <select class="form-select" name="teacher_id">
+
+                                    {% for teacher in teachers %}
+                                    {% if teacher.first %}
+                                    <option value="{{teachers.teacher_id}}" selected>{{ teacher.title + " " +
+                                        teacher.f_name + "
+                                        " + teacher.l_name }}</option>
+                                    {% endif %}
+
+                                    <option value="{{teachers.teacher_id}}">{{ teacher.title + " " + teacher.f_name + "
+                                        " +
+                                        teacher.l_name }}</option>
+                                    {% endfor %}
+
+                                </select>
+                            </div>
+
+                            <div class="col mb-3">
+                                <label for="times" class="form-label">จำนวนครั้งที่จะเรียน</label>
+                                <input type="number" class="form-control" id="times" name="times">
+                            </div>
+
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+                            <button type="submit" class="btn btn-primary">เพิ่ม</button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+
+        <table id="history_table">
+            <thead>
+                <tr>
+                    <th>id</th>
+                    <th>ชื่อวิชา</th>
+                    <th>ระดับ</th>
+                    <th>จำนวนครั้งที่เหลือ</th>
+                    <th>ดูใบเสร็จ</th>
+                </tr>
+            </thead>
+
+
+            <tbody>
+
+                {% for row in rows %}
+                <tr>
+                    <td>{{ row.registration_id }}</td>
+                    <td>{{ row.subject_name}}</td>
+                    <td>{{ row.level_name}}</td>
+                    <td>{{ row.time_left }} / {{ row.times }}</td>
+                    <td>
+                        <a href="/recipt/{{ row.student_id }}/{{ row.subject_id }}/{{ row.level_id }}">
+                            <button class="btn btn-primary">ดูใบเสร็จ</button>
+                        </a>
+                    </td>
+
+                </tr>
+                {% endfor %}
+
+            </tbody>
+
+
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function () {
+        $('#history_table').DataTable();
+    });
+</script>
+{% endblock %}

@@ -10,10 +10,10 @@
         <div class="modal fade" id="add_student" tabindex="-1">
             <div class="modal-dialog modal-xl">
                 <div class="modal-content">
-                    <form action="/add?category=student" method="post">
+                    <form action="/add/student" method="post">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="exampleModalLabel">เพิ่มนักเรียน</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <h5 class="modal-title">เพิ่มนักเรียน</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
                             <h4>ข้อมูลทั่วไป</h4>
@@ -26,7 +26,7 @@
                             <div class="row mb-3">
                                 <div class="col mb-3">
                                     <label for="title" class="form-label">คำนำหน้า</label>
-                                    <select class="form-select" aria-label="title" name="title">
+                                    <select class="form-select" name="title">
                                         <option selected>นาย</option>
                                         <option value="1">นาง</option>
                                         <option value="2">นางสาว</option>
@@ -52,7 +52,7 @@
 
                             <div class="col-12 mb-3">
                                 <label for="address" class="form-label">ที่อยู่</label>
-                                <input type="tel" class="form-control" id="address" name="address">
+                                <textarea class="form-control" id="address" name="address" rows="2"></textarea>
                             </div>
 
                             <div class="col-12 mb-3">
@@ -82,7 +82,7 @@
                             <div class="row mb-3">
                                 <div class="col mb-3">
                                     <label for="title" class="form-label">คำนำหน้า</label>
-                                    <select class="form-select" aria-label="title" name="title">
+                                    <select class="form-select" name="title">
                                         <option selected>นาย</option>
                                         <option value="1">นาง</option>
                                         <option value="2">นางสาว</option>
@@ -114,8 +114,8 @@
 
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="submit" class="btn btn-primary">Add</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+                            <button type="submit" class="btn btn-primary">เพิ่ม</button>
                         </div>
                     </form>
 
@@ -128,16 +128,15 @@
                 <tr>
                     <th>id</th>
                     <th>ชื่อ</th>
-                    <th>เบอร์โทร</th>
                     <th>Email</th>
+                    <th>เบอร์โทร</th>
 
-                    <th>
-                        วิชา
-                    </th>
+                    <th>วิชาที่ลงไว้</th>
 
-                    <th>
-                        เช็คชื่อ
-                    </th>
+                    <th>เช็คชื่อ</th>
+
+                    <th>ประวัติเข้าเรียน</th>
+                    <th>ลบ</th>
                 </tr>
             </thead>
 
@@ -147,26 +146,37 @@
                 {% for student in students %}
                 <tr>
                     <td>{{ student.student_id }}</td>
-                    <td>{{ student.f_name + " " + student.l_name + " " }} ({{ student.n_name }})</td>
+                    <td>
+                        <a href="/students/{{ student.student_id }}">
+                            {{ student.f_name + " " + student.l_name + " " }} ({{ student.n_name }})
+                        </a>
+                    </td>
 
-                    <td>{{ student.phone_num }}</td>
                     <td>{{ student.email }}</td>
+                    <td>{{ student.phone_num }}</td>
 
                     <td>
-                        <a href="/registration?student_id={{ student.student_id }}">
-                            <button class="btn btn-primary">ลงวิชาเพิ่ม</button>
-                        </a>
-
-                        <a href="/history/{{ student.student_id }}">
+                        <a href="/registrations/{{ student.student_id }}">
                             <button class="btn btn-success">ดูวิชาที่ลงไว้</button>
                         </a>
                     </td>
 
                     <td>
-                        <input class="form-check-input" type="checkbox" id="attendance" value="{{ student.student_id }}"
-                            {% if student.student_id in students_attended %} checked disabled {% endif %}>
+                        <input class="form-check-input" type="checkbox" id="attendance" data-student-id="{{ student.student_id }}" {% if student.is_attended==1 %} checked="" if student.is_attended==1 %}
+                            checked disabled {% endif %}>
+                        {{ student.attendance_id }}
+
+                    </td>
+
+                    <td>
                         <a href="/attendances/{{ student.student_id }}">
-                            <button class="btn btn-success">ประวัติเข้าเรียน</button>
+                            <button class="btn btn-success">ดูประวัติเข้าเรียน</button>
+                        </a>
+                    </td>
+
+                    <td>
+                        <a href="/delete/student?student_id={{ student.student_id }}">
+                            <button class="btn btn-danger">ลบ</button>
                         </a>
                     </td>
                 </tr>
@@ -187,20 +197,35 @@
         $('#student_table').DataTable();
 
         $('#attendance').change(function () {
-            var student_id = $(this).val();
-            
-            $.ajax({
-                type: "POST",
-                url: "/attendance",
-                data: {
-                    student_id: student_id,
-                },
-                success: function (data) {
-                    console.log(data);
-                }
-            });
+            var student_id = $(this).data('student-id');
+            let isChecked = $(this).is(':checked');
+
+            if (isChecked) {
+                $.ajax({
+                    type: "POST",
+                    url: "/add/attendance",
+                    data: {
+                        student_id: student_id,
+                    },
+                    success: function (data) {
+                        console.log(data);
+                    }
+                });
+            } else {
+                $.ajax({
+                    type: "POST",
+                    url: "/delete/attendance",
+                    data: {
+                        student_id: student_id,
+                    },
+                    success: function (data) {
+                        console.log(data);
+                    }
+                });
+            }
 
             location.reload();
+
         });
     });
 </script>

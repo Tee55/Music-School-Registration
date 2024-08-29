@@ -10,10 +10,10 @@
         <div class="modal fade" id="add_subject" tabindex="-1">
             <div class="modal-dialog modal-xl">
                 <div class="modal-content">
-                    <form action="/add?category=subject" method="post">
+                    <form action="/add/subject" method="post">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="exampleModalLabel">เพิ่มวิชาที่สอน</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <h5 class="modal-title">เพิ่มวิชาที่สอน</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
                             <div class="col mb-3">
@@ -22,8 +22,8 @@
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="submit" class="btn btn-primary">Add</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+                            <button type="submit" class="btn btn-primary">เพิ่ม</button>
                         </div>
                     </form>
 
@@ -37,7 +37,7 @@
                     <th>id</th>
                     <th>Name</th>
                     <th>ดูอัตราค่าสอนตามระดับ</th>
-                    <th></th>
+                    <th>ลบ</th>
                 </tr>
             </thead>
 
@@ -49,12 +49,12 @@
                     <td>{{ subject.subject_id }}</td>
                     <td>{{ subject.subject_name}}</td>
                     <td>
-                        <a href="/payments/{{ subject.subject_id }}">
+                        <a href="/prices/{{ subject.subject_id }}">
                             <button class="btn btn-success">ดูอัตราค่าสอน</button>
                         </a>
                     </td>
                     <td>
-                        <a href="/subjects/{{ subject.subject_id }}/delete">
+                        <a href="/delete/subject?subject_id={{ subject.subject_id }}">
                             <button class="btn btn-danger">ลบ</button>
                         </a>
                     </td>

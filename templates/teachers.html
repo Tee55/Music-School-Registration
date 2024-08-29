@@ -10,10 +10,10 @@
         <div class="modal fade" id="add_teacher" tabindex="-1">
             <div class="modal-dialog modal-xl">
                 <div class="modal-content">
-                    <form action="/add?category=teacher" method="post">
+                    <form action="/add/teacher" method="post">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="exampleModalLabel">เพิ่มอาจารย์</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <h5 class="modal-title">เพิ่มอาจารย์</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
                             <h4>ข้อมูลทั่วไป</h4>
@@ -26,7 +26,7 @@
                             <div class="row mb-3">
                                 <div class="col mb-3">
                                     <label for="title" class="form-label">คำนำหน้า</label>
-                                    <select class="form-select" aria-label="title" name="title">
+                                    <select class="form-select" name="title">
                                         <option selected>นาย</option>
                                         <option value="1">นาง</option>
                                         <option value="2">นางสาว</option>
@@ -75,6 +75,12 @@
                                     <label for="phone_num" class="form-label">เบอร์โทร</label>
                                     <input type="tel" class="form-control" id="phone_num" name="phone_num">
                                 </div>
+
+                                <div class="col mb-3">
+                                    <label for="payment_ratio" class="form-label">อัตราค่าสอนที่ได้: <span
+                                            id="payment_ratio_text">0</span></label>
+                                    <input type="range" class="form-range" id="payment_ratio" name="payment_ratio" min="0" max="1" step="0.1" value="0">
+                                </div>
                             </div>
 
                         </div>
@@ -93,10 +99,10 @@
                 <tr>
                     <th>id</th>
                     <th>Name</th>
-                    <th>Phone</th>
                     <th>Email</th>
-                    <th>ดูเงินที่ต้องจ่ายให้ครู</th>
-                    <th></th>
+                    <th>Phone</th>
+                    <th>เงินที่ต้องจ่ายให้ครูเดือนนี้</th>
+                    <th>ลบ</th>
                 </tr>
             </thead>
 
@@ -106,17 +112,24 @@
                 {% for teacher in teachers %}
                 <tr>
                     <td>{{ teacher.teacher_id }}</td>
-                    <td>{{ teacher.f_name + " " + teacher.l_name + " " }} ({{ teacher.n_name }})</td>
-                    <td>{{ teacher.email }}</td>
-                    <td>{{ teacher.phone_num }}</td>
                     <td>
-                        {{ totals[loop.index0] }}
                         <a href="/teachers/{{ teacher.teacher_id }}">
-                            <button class="btn btn-primary">ประวัติ</button>
+                            {{ teacher.f_name + " " + teacher.l_name + " " }} ({{ teacher.n_name }})
                         </a>
                     </td>
+                    <td>{{ teacher.email }}</td>
+                    <td>{{ teacher.phone_num }}</td>
+
+
                     <td>
-                        <a href="/teachers/{{ teacher.teacher_id }}/delete">
+                        <a href="/payments/{{ teacher.teacher_id }}">
+                            {{ teacher.payment }}
+                        </a>
+
+                    </td>
+
+                    <td>
+                        <a href="/delete/teacher?teacher_id={{ teacher.teacher_id }}">
                             <button class="btn btn-danger">ลบ</button>
                         </a>
                     </td>
@@ -136,6 +149,12 @@
 <script>
     $(document).ready(function () {
         $('#teacher_table').DataTable();
+
+        $('#payment_ratio').change(function () { 
+            // To percentage
+            var ratio = $(this).val() * 100;
+            $('#payment_ratio_text').text(ratio + "%");
+        });
     });
 </script>
 {% endblock %}
