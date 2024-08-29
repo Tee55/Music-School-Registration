@@ -1,1 +1,1 @@
-pyinstaller --onefile --add-data "templates:templates" --add-data "database:database" --add-data "static:static" --add-data "fonts:fonts" main.py
+pyinstaller --onefile --add-data "templates:templates" --add-data "static:static" --add-data "fonts:fonts" main.py
