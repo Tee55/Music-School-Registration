@@ -1,0 +1,95 @@
+<h4>ข้อมูลทั่วไป</h4>
+
+<div class="col-12 mb-3">
+    <label for="student_id" class="form-label">รหัสนักเรียน</label>
+    <input type="text" class="form-control" id="student_id" name="student_id" {% if student %} value="{{ student.student_id}}" disabled {% endif %}>
+</div>
+
+<div class="row mb-3">
+    <div class="col mb-3">
+        <label for="title" class="form-label">คำนำหน้า</label>
+        <select class="form-select" name="title" {% if student %} value="{{student.title}}" {% endif %}>
+            <option selected>นาย</option>
+            <option value="1">นาง</option>
+            <option value="2">นางสาว</option>
+        </select>
+    </div>
+
+    <div class="col mb-3">
+        <label for="f_name" class="form-label">ชื่อ</label>
+        <input type="text" class="form-control" id="f_name" name="f_name" {% if student %} value="{{student.f_name}}" {% endif %}>
+    </div>
+
+    <div class="col mb-3">
+        <label for="l_name" class="form-label">นามสกุล</label>
+        <input type="text" class="form-control" id="l_name" name="l_name" {% if student %} value="{{student.l_name}}" {% endif %}>
+    </div>
+
+    <div class="col mb-3">
+        <label for="n_name" class="form-label">ชื่อเล่น</label>
+        <input type="text" class="form-control" id="n_name" name="n_name" {% if student %} value="{{student.n_name}}" {% endif %}>
+    </div>
+
+</div>
+
+<div class="col-12 mb-3">
+    <label for="address" class="form-label">ที่อยู่</label>
+    <textarea class="form-control" id="address" name="address" rows="2" {% if student %} value="{{student.address}}" {% endif %}></textarea>
+</div>
+
+<div class="col-12 mb-3">
+    <label for="dob" class="form-label">วันเกิด</label>
+    <input type="date" class="form-control" id="dob" name="dob" {% if student %} value="{{student.dob}}" {% endif %}>
+</div>
+
+<div class="col-12 mb-3">
+    <label for="job" class="form-label">อาชีพ</label>
+    <input type="text" class="form-control" id="job" name="job" {% if student %} value="{{student.job}}" {% endif %}>
+</div>
+
+<div class="row mb-3">
+    <div class="col mb-3">
+        <label for="email" class="form-label">อีเมล</label>
+        <input type="email" class="form-control" id="email" name="email" {% if student %} value="{{student.email}}" {% endif %}>
+    </div>
+
+    <div class="col mb-3">
+        <label for="phone_num" class="form-label">เบอร์โทร</label>
+        <input type="tel" class="form-control" id="phone_num" name="phone_num" {% if student %} value="{{student.phone_num}}" {% endif %}>
+    </div>
+</div>
+
+<h4>ข้อมูลครอบครัว</h4>
+
+<div class="row mb-3">
+    <div class="col mb-3">
+        <label for="family_title" class="form-label">คำนำหน้า</label>
+        <select class="form-select" name="family_title" {% if student %} value="{{student.family_title}}" {% endif %}>
+            <option selected>นาย</option>
+            <option value="1">นาง</option>
+            <option value="2">นางสาว</option>
+        </select>
+    </div>
+
+    <div class="col mb-3">
+        <label for="family_f_name" class="form-label">ชื่อ</label>
+        <input type="text" class="form-control" id="family_f_name" name="family_f_name" {% if student %} value="{{student.family_f_name}}" {% endif %}>
+    </div>
+
+    <div class="col mb-3">
+        <label for="family_l_name" class="form-label">นามสกุล</label>
+        <input type="text" class="form-control" id="family_l_name" name="family_l_name" {% if student %} value="{{student.family_l_name}}" {% endif %}>
+    </div>
+
+    <div class="col mb-3">
+        <label for="family_relationship" class="form-label">ความสัมพันธ์</label>
+        <input type="text" class="form-control" id="family_relationship" name="family_relationship" {% if student %} value="{{student.family_relationship}}" {% endif %}>
+    </div>
+</div>
+
+<h4>ข้อมูลเพิ่มเติม</h4>
+
+<div class="col-12 mb-3">
+    <label for="instruments" class="form-label">เครื่องดนตรีที่มี</label>
+    <input type="text" class="form-control" id="instruments" name="instruments" {% if student %} value="{{student.instruments}}" {% endif %}>
+</div>

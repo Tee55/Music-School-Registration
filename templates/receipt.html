@@ -14,25 +14,25 @@
                     <div class="col-12 mb-3">
                         <label for="student_id" class="form-label">รหัสนักเรียน</label>
                         <input type="text" class="form-control" id="student_id" name="student_id"
-                            value="{{student.student_id}}" readonly>
+                            value="{{data.student_id}}" readonly>
                     </div>
 
                     <div class="row mb-3">
                         <div class="col mb-3">
                             <label for="title" class="form-label">คำนำหน้า</label>
-                            <input type="text" class="form-control" id="title" name="title"
-                                value="{{student.title}}" readonly>
+                            <input type="text" class="form-control" id="title" name="title" value="{{data.title}}"
+                                readonly>
                         </div>
 
                         <div class="col mb-3">
                             <label for="f_name" class="form-label">ชื่อ</label>
-                            <input type="text" class="form-control" id="f_name" name="f_name" value="{{student.f_name}}"
+                            <input type="text" class="form-control" id="f_name" name="f_name" value="{{data.f_name}}"
                                 readonly>
                         </div>
 
                         <div class="col mb-3">
                             <label for="l_name" class="form-label">นามสกุล</label>
-                            <input type="text" class="form-control" id="l_name" name="l_name" value="{{student.l_name}}"
+                            <input type="text" class="form-control" id="l_name" name="l_name" value="{{data.l_name}}"
                                 readonly>
                         </div>
 
@@ -40,22 +40,22 @@
 
                     <div class="col-12 mb-3">
                         <label for="subject" class="form-label">วิชาที่จะเรียน</label>
-                        <input type="text" class="form-control" id="subject" name="subject" value="{{subject.subject_name}}"
+                        <input type="text" class="form-control" id="subject" name="subject"
+                            value="{{data.subject_name}}" readonly>
+                    </div>
+
+                    <div class="col-12 mb-3">
+                        <label for="times" class="form-label">จำนวนครั้งที่จะเรียน</label>
+                        <input type="number" class="form-control" id="times" name="times" value="{{data.times}}"
                             readonly>
                     </div>
 
                     <div class="col-12 mb-3">
-                        <label for="time_left" class="form-label">จำนวนครั้งที่จะเรียน</label>
-                        <input type="number" class="form-control" id="time_left" name="time_left" value="{{time_left}}"
+                        <label for="payment" class="form-label">จำนวนเงินที่ต้องจ่าย</label>
+                        <input type="text" class="form-control" id="payment" name="payment" value="{{payment}}"
                             readonly>
                     </div>
 
-                    <div class="col-12 mb-3">
-                        <label for="pay_amount" class="form-label">จำนวนเงินที่ต้องจ่าย</label>
-                        <input type="text" class="form-control" id="pay_amount" name="pay_amount" value="{{pay_amount}}"
-                            readonly>
-                    </div>
-                    
                     <button type="submit" class="btn btn-primary">Print</button>
                 </form>
             </div>

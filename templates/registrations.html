@@ -118,7 +118,7 @@
             </div>
         </div>
 
-        <table id="history_table">
+        <table id="registration_table">
             <thead>
                 <tr>
                     <th>id</th>
@@ -139,7 +139,7 @@
                     <td>{{ row.level_name}}</td>
                     <td>{{ row.time_left }} / {{ row.times }}</td>
                     <td>
-                        <a href="/recipt/{{ row.student_id }}/{{ row.subject_id }}/{{ row.level_id }}">
+                        <a href="/receipt/{{ row.student_id }}/{{ row.subject_id }}/{{ row.level_id }}">
                             <button class="btn btn-primary">ดูใบเสร็จ</button>
                         </a>
                     </td>
@@ -159,7 +159,7 @@
 {% block scripts %}
 <script>
     $(document).ready(function () {
-        $('#history_table').DataTable();
+        $('#registration_table').DataTable();
     });
 </script>
 {% endblock %}

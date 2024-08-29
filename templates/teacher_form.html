@@ -1,0 +1,64 @@
+<div class="col-12 mb-3">
+    <label for="teacher_id" class="form-label">รหัสนักเรียน</label>
+    <input type="text" class="form-control" id="teacher_id" name="teacher_id" {% if teacher %} value="{{ teacher.teacher_id}}" disabled {% endif %}>
+</div>
+
+<div class="row mb-3">
+    <div class="col mb-3">
+        <label for="title" class="form-label">คำนำหน้า</label>
+        <select class="form-select" name="title" {% if teacher %} value="{{ teacher.title}}" {% endif %}>
+            <option selected>นาย</option>
+            <option value="1">นาง</option>
+            <option value="2">นางสาว</option>
+        </select>
+    </div>
+
+    <div class="col mb-3">
+        <label for="f_name" class="form-label">ชื่อ</label>
+        <input type="text" class="form-control" id="f_name" name="f_name" {% if teacher %} value="{{ teacher.f_name}}" {% endif %}>
+    </div>
+
+    <div class="col mb-3">
+        <label for="l_name" class="form-label">นามสกุล</label>
+        <input type="text" class="form-control" id="l_name" name="l_name" {% if teacher %} value="{{ teacher.l_name}}" {% endif %}>
+    </div>
+
+    <div class="col mb-3">
+        <label for="n_name" class="form-label">ชื่อเล่น</label>
+        <input type="text" class="form-control" id="n_name" name="n_name" {% if teacher %} value="{{teacher.n_name}}" {% endif %}>
+    </div>
+
+</div>
+
+<div class="col-12 mb-3">
+    <label for="address" class="form-label">ที่อยู่</label>
+    <textarea class="form-control" id="address" name="address" rows="2" {% if teacher %} value="{{teacher.address}}" {% endif %}></textarea>
+</div>
+
+<div class="col-12 mb-3">
+    <label for="dob" class="form-label">วันเกิด</label>
+    <input type="date" class="form-control" id="dob" name="dob" {% if teacher %} value="{{teacher.dob}}" {% endif %}>
+</div>
+
+<div class="col-12 mb-3">
+    <label for="job" class="form-label">อาชีพ</label>
+    <input type="text" class="form-control" id="job" name="job" {% if teacher %} value="{{teacher.job}}" {% endif %}>
+</div>
+
+<div class="row mb-3">
+    <div class="col mb-3">
+        <label for="email" class="form-label">อีเมล</label>
+        <input type="email" class="form-control" id="email" name="email" {% if teacher %} value="{{teacher.email}}" {% endif %}>
+    </div>
+
+    <div class="col mb-3">
+        <label for="phone_num" class="form-label">เบอร์โทร</label>
+        <input type="tel" class="form-control" id="phone_num" name="phone_num" {% if teacher %} value="{{teacher.phone_num}}" {% endif %}>
+    </div>
+</div>
+
+<div class="col mb-3">
+    <label for="payment_ratio" class="form-label">อัตราค่าสอนที่ได้: <span
+            id="payment_ratio_text">{% if teacher %} {{teacher.payment_ratio * 100}} {% endif %}</span></label>
+    <input type="range" class="form-range" id="payment_ratio" name="payment_ratio" min="0" max="1" step="0.1" {% if teacher %} value="{{teacher.payment_ratio}}" {% else %} value="0" {% endif %}>
+</div>

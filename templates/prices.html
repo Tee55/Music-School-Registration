@@ -13,7 +13,7 @@
         <div class="modal fade" id="add_price" tabindex="-1">
             <div class="modal-dialog modal-xl">
                 <div class="modal-content">
-                    <form action="/add/price" method="post">
+                    <form action="/add/price" method="post" enctype="multipart/form-data">
                         <div class="modal-header">
                             <h5 class="modal-title">ข้อมูลที่ต้องการเพิ่ม</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -22,12 +22,12 @@
 
                             <div class="col mb-3">
                                 <label for="subject_id" class="form-label">รหัสวิชา</label>
-                                <input type="number" class="form-control" id="subject_id" name="subject_id" value="{{ subject.subject_id }}" disabled>
+                                <input type="number" class="form-control" id="subject_id" name="subject_id" value="{{ subject.subject_id }}" readonly>
                             </div>
 
                             <div class="col mb-3">
                                 <label for="subject_name" class="form-label">รหัสวิชา</label>
-                                <input type="text" class="form-control" id="subject_name" name="subject_name" value="{{ subject.subject_name }}" disabled>
+                                <input type="text" class="form-control" id="subject_name" name="subject_name" value="{{ subject.subject_name }}" readonly>
                             </div>
 
 
@@ -80,7 +80,7 @@
                     <td>{{ price.level_name }}</td>
                     <td>{{ price.price }}</td>
                     <td>
-                        <a href="/delete/price?price_id={{ price.price_id }}">
+                        <a href="/delete/price?price_id={{ price.price_id }}&subject_id={{ subject.subject_id }}">
                             <button class="btn btn-danger">ลบ</button>
                         </a>
                     </td>
