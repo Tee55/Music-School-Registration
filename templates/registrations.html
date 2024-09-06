@@ -12,7 +12,7 @@
         <div class="modal fade" id="add_registration" tabindex="-1">
             <div class="modal-dialog modal-xl">
                 <div class="modal-content">
-                    <form action="/add/registration" method="post">
+                    <form action="/add/registration?student_id={{student.student_id}}" method="post" enctype="multipart/form-data">
                         <div class="modal-header">
                             <h5 class="modal-title">ข้อมูลที่จะลง</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -28,7 +28,7 @@
                             <div class="row mb-3">
                                 <div class="col mb-3">
                                     <label for="title" class="form-label">คำนำหน้า</label>
-                                    <select class="form-select" name="title" value="{{student.title}}">
+                                    <select class="form-select" id="title" name="title" value="{{student.title}}">
                                         <option selected>นาย</option>
                                         <option value="1">นาง</option>
                                         <option value="2">นางสาว</option>
@@ -52,7 +52,7 @@
                             <div class="row mb-3">
                                 <div class="col mb-3">
                                     <label for="subject_id" class="form-label">วิชาที่จะเรียน</label>
-                                    <select class="form-select" name="subject_id">
+                                    <select class="form-select" id="subject" name="subject_id">
 
                                         {% for subject in subjects %}
                                         {% if subject.first %}
@@ -69,7 +69,7 @@
 
                                 <div class="col mb-3">
                                     <label for="level_id" class="form-label">ระดับที่จะเรียน</label>
-                                    <select class="form-select" name="level_id">
+                                    <select class="form-select" id="level" name="level_id">
 
                                         {% for level in levels %}
                                         {% if level.first %}
@@ -85,7 +85,7 @@
 
                             <div class="col mb-3">
                                 <label for="teacher_id" class="form-label">อาจารย์ที่สอน</label>
-                                <select class="form-select" name="teacher_id">
+                                <select class="form-select" id="teacher_id" name="teacher_id">
 
                                     {% for teacher in teachers %}
                                     {% if teacher.first %}
@@ -126,6 +126,7 @@
                     <th>ระดับ</th>
                     <th>จำนวนครั้งที่เหลือ</th>
                     <th>ดูใบเสร็จ</th>
+                    <th>ลบ</th>
                 </tr>
             </thead>
 
@@ -141,6 +142,12 @@
                     <td>
                         <a href="/receipt/{{ row.student_id }}/{{ row.subject_id }}/{{ row.level_id }}">
                             <button class="btn btn-primary">ดูใบเสร็จ</button>
+                        </a>
+                    </td>
+
+                    <td>
+                        <a href="/delete/registration?registration_id={{ row.registration_id }}">
+                            <button class="btn btn-danger">ลบ</button>
                         </a>
                     </td>
 
@@ -160,6 +167,24 @@
 <script>
     $(document).ready(function () {
         $('#registration_table').DataTable();
+
+        $('#subject').change(function() {
+            var subject_id = $(this).val();
+            console.log(subject_id);
+
+
+            $.ajax({
+                url: '/get_prices/' + subject_id,
+                type: 'GET',
+                success: function(data) {
+                    $('#level').empty();
+                    $('#level').append('<option value="" disabled selected>Select a level</option>');
+                    $.each(data, function(index, level) {
+                        $('#level').append('<option value="' + level.level_id + '">' + level.level_name + '</option>');
+                    });
+                }
+            });
+        });
     });
 </script>
 {% endblock %}

@@ -308,6 +308,7 @@ def add(category):
             db.commit()
             db.close()
 
+            flash("เพิ่มนักเรียนสําเร็จ", "success")
             return redirect(url_for('students'))
 
         elif category == "teacher":
@@ -331,6 +332,7 @@ def add(category):
             db.commit()
             db.close()
 
+            flash("เพิ่มอาจารย์สําเร็จ", "success")
             return redirect(url_for('teachers'))
 
         elif category == "subject":
@@ -344,6 +346,7 @@ def add(category):
             db.commit()
             db.close()
 
+            flash("เพิ่มวิชาสําเร็จ", "success")
             return redirect(url_for('subjects'))
         elif category == "level":
 
@@ -356,6 +359,7 @@ def add(category):
             db.commit()
             db.close()
 
+            flash("เพิ่มระดับชั้นสําเร็จ", "success")
             return redirect(url_for('levels'))
 
         elif category == "price":
@@ -371,6 +375,7 @@ def add(category):
             db.commit()
             db.close()
 
+            flash("เพิ่มราคาสําเร็จ", "success")
             return redirect(url_for('prices', subject_id=subject_id))
 
         elif category == "attendance":
@@ -388,7 +393,34 @@ def add(category):
             for row in rows:
                 add_attendance(student_id, row[0], row[1], date.today())
 
+            flash("เช็คชื่อเรียบร้อยแล้ว", "success")
             return redirect(url_for('students'))
+        
+        elif category == "registration":
+
+            student_id = request.args.get('student_id')
+
+            subject_id = request.form['subject_id']
+            level_id = request.form['level_id']
+            teacher_id = request.form['teacher_id']
+            times = request.form['times']
+
+            print(teacher_id)
+
+            if int(times) % 4 != 0:
+                flash("จํานวนครั้งที่สอนต้องหาร 4 ลงตัว", "warning")
+                return redirect(url_for('registrations', student_id=student_id))
+            
+            db = get_db()
+            c = db.cursor()
+            c.execute("INSERT INTO registrations (student_id, subject_id, level_id, teacher_id, time_left, times) VALUES (?, ?, ?, ?, ?, ?)",
+                    (student_id, subject_id, level_id, teacher_id, times, times))
+            db.commit()
+            db.close()
+
+            flash("เพิ่มวิชาที่เรียนเรียบร้อยแล้ว", "success")
+
+            return redirect(url_for('receipt', student_id=student_id, subject_id=subject_id, level_id=level_id))
 
     else:
         return redirect(url_for('students'))
@@ -450,6 +482,7 @@ def update(category):
             db.close()
 
             return redirect(url_for('teachers'))
+        
     else:
         return redirect(url_for('students'))
 
@@ -521,7 +554,7 @@ def delete(category=None):
             db = get_db()
             c = db.cursor()
             c.execute(
-                "DELETE FROM registration WHERE registration_id = ?", (registration_id,))
+                "DELETE FROM registrations WHERE registration_id = ?", (registration_id,))
             db.commit()
             db.close()
 
@@ -559,22 +592,7 @@ def delete(category=None):
 
 
 @app.route("/registrations/<student_id>", methods=['GET', 'POST'])
-def registration(student_id):
-
-    if request.method == 'POST':
-        subject_id = request.form['subject_id']
-        level_id = request.form['level_id']
-        teacher_id = request.form['teacher_id']
-        times = request.form['times']
-
-        db = get_db()
-        c = db.cursor()
-        c.execute("INSERT INTO registration (student_id, subject_id, level_id, teacher_id, time_left, times) VALUES (?, ?, ?, ?, ?, ?)",
-                  (student_id, subject_id, level_id, teacher_id, times, times))
-        db.commit()
-        db.close()
-
-        return redirect(url_for('receipt', student_id=student_id, subject_id=subject_id, level_id=level_id))
+def registrations(student_id):
 
     db = get_db()
     c = db.cursor()
@@ -586,7 +604,7 @@ def registration(student_id):
         flash("ไม่มีนักเรียนไอดีนี้", "warning")
         return redirect(url_for('students'))
 
-    # Get all subjects
+    # Get all subjects and its levels
     db = get_db()
     c = db.cursor()
     c.execute("SELECT * FROM subjects")
@@ -595,17 +613,6 @@ def registration(student_id):
 
     if len(subjects) == 0:
         flash("ไม่มีรายวิชาที่สอน", "warning")
-        return redirect(url_for('students'))
-
-    # Get all levels
-    db = get_db()
-    c = db.cursor()
-    c.execute("SELECT * FROM levels")
-    levels = c.fetchall()
-    db.close()
-
-    if len(levels) == 0:
-        flash("ไม่มีข้อมูลระดับ", "warning")
         return redirect(url_for('students'))
 
     # Get all teachers
@@ -618,12 +625,25 @@ def registration(student_id):
     # Get registrations according to student_id
     db = get_db()
     c = db.cursor()
-    c.execute("SELECT registrations.registration_id, students.student_id, subjects.subject_id, levels.level_id, subjects.subject_name, levels.level_name, teachers.n_name, registrations.time_left, registrations.times FROM registrations JOIN subjects JOIN levels JOIN teachers JOIN students ON registrations.subject_id = subjects.subject_id AND registrations.level_id = levels.level_id AND registrations.teacher_id = teachers.teacher_id WHERE registrations.student_id = ?", (student_id,))
+    c.execute("SELECT registrations.registration_id, students.student_id, subjects.subject_id, levels.level_id, subjects.subject_name, levels.level_name, teachers.n_name, registrations.time_left, registrations.times FROM registrations JOIN subjects JOIN levels JOIN teachers JOIN students ON registrations.subject_id = subjects.subject_id AND registrations.level_id = levels.level_id AND registrations.teacher_id = teachers.teacher_id WHERE registrations.student_id = ? GROUP BY registrations.registration_id", (student_id,))
     rows = c.fetchall()
     db.close()
 
-    return render_template('registrations.html', student=student, rows=rows, subjects=subjects, levels=levels, teachers=teachers)
+    return render_template('registrations.html', student=student, rows=rows, subjects=subjects, teachers=teachers)
 
+@app.route('/get_prices/<int:subject_id>', methods=['GET', 'POST'])
+def get_levels(subject_id):
+    db = get_db()
+    c = db.cursor()
+    # Get levels based on the selected subject
+    c.execute("SELECT levels.level_id, levels.level_name FROM prices JOIN levels ON prices.level_id = levels.level_id WHERE subject_id = ?", (subject_id,))
+    rows = c.fetchall()
+    db.close()
+
+    # Convert rows to a list of dictionaries
+    levels = [{"level_id": row[0], "level_name": row[1]} for row in rows]
+    
+    return jsonify(levels)
 
 def add_attendance(student_id, subject_id, level_id, attend_date):
 
@@ -879,7 +899,7 @@ def receipt(student_id, subject_id, level_id):
     data = c.fetchone()
     db.close()
 
-    if data[0] % 4 == 0:
+    if int(data[0]) % 4 == 0:
         payment = data[1] * (data[0] // 4)
         return render_template('receipt.html', data=data, payment=payment)
     else:

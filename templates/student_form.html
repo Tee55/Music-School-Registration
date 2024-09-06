@@ -9,9 +9,9 @@
     <div class="col mb-3">
         <label for="title" class="form-label">คำนำหน้า</label>
         <select class="form-select" name="title" {% if student %} value="{{student.title}}" {% endif %}>
-            <option selected>นาย</option>
-            <option value="1">นาง</option>
-            <option value="2">นางสาว</option>
+            <option value="นาย" selected>นาย</option>
+            <option value="นาง">นาง</option>
+            <option value="นางสาว">นางสาว</option>
         </select>
     </div>
 
