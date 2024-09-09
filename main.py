@@ -92,6 +92,7 @@ def create_database():
               teacher_id INTEGER,
               time_left INTEGER,
               times INTEGER,
+              schedule TEXT NOT NULL,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 
               FOREIGN KEY (student_id) REFERENCES students(student_id),
@@ -142,7 +143,7 @@ def create_database():
     # Data for testing
     c.execute('''INSERT INTO students (student_id, title, f_name, l_name) VALUES (123, "นาย", "สมชาย", "สมหญิง")''')
     c.execute('''INSERT INTO teachers (teacher_id, title, f_name, l_name, payment_ratio) VALUES (987, "นาย", "Teerapath", "Sattabongkot", 0.5)''')
-    c.execute('''INSERT INTO registrations (student_id, subject_id, level_id, teacher_id, time_left, times) VALUES (123, 1, 1, 987, 5, 8)''')
+    c.execute('''INSERT INTO registrations (student_id, subject_id, level_id, teacher_id, time_left, times, schedule) VALUES (123, 1, 1, 987, 5, 8, "วันอังคาร 10:00 - 12:00")''')
 
     c.execute('''INSERT INTO attendances (student_id, subject_id, level_id, date) VALUES (123, 1, 1, "2024-08-17")''')
     c.execute('''INSERT INTO attendances (student_id, subject_id, level_id, date) VALUES (123, 1, 1, "2024-08-18")''')
@@ -391,6 +392,7 @@ def add(category):
             db.close()
 
             for row in rows:
+                print("here")
                 add_attendance(student_id, row[0], row[1], date.today())
 
             flash("เช็คชื่อเรียบร้อยแล้ว", "success")
@@ -404,8 +406,7 @@ def add(category):
             level_id = request.form['level_id']
             teacher_id = request.form['teacher_id']
             times = request.form['times']
-
-            print(teacher_id)
+            schedule = request.form['schedule']
 
             if int(times) % 4 != 0:
                 flash("จํานวนครั้งที่สอนต้องหาร 4 ลงตัว", "warning")
@@ -413,8 +414,8 @@ def add(category):
             
             db = get_db()
             c = db.cursor()
-            c.execute("INSERT INTO registrations (student_id, subject_id, level_id, teacher_id, time_left, times) VALUES (?, ?, ?, ?, ?, ?)",
-                    (student_id, subject_id, level_id, teacher_id, times, times))
+            c.execute("INSERT INTO registrations (student_id, subject_id, level_id, teacher_id, time_left, times, schedule) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    (student_id, subject_id, level_id, teacher_id, times, times, schedule))
             db.commit()
             db.close()
 
@@ -618,14 +619,14 @@ def registrations(student_id):
     # Get all teachers
     db = get_db()
     c = db.cursor()
-    c.execute("SELECT * FROM teachers")
+    c.execute("SELECT teacher_id, title, f_name, l_name, n_name FROM teachers")
     teachers = c.fetchall()
     db.close()
 
     # Get registrations according to student_id
     db = get_db()
     c = db.cursor()
-    c.execute("SELECT registrations.registration_id, students.student_id, subjects.subject_id, levels.level_id, subjects.subject_name, levels.level_name, teachers.n_name, registrations.time_left, registrations.times FROM registrations JOIN subjects JOIN levels JOIN teachers JOIN students ON registrations.subject_id = subjects.subject_id AND registrations.level_id = levels.level_id AND registrations.teacher_id = teachers.teacher_id WHERE registrations.student_id = ? GROUP BY registrations.registration_id", (student_id,))
+    c.execute("SELECT registrations.registration_id, students.student_id, subjects.subject_id, levels.level_id, subjects.subject_name, levels.level_name, teachers.n_name, registrations.time_left, registrations.times, registrations.schedule FROM registrations JOIN subjects JOIN levels JOIN teachers JOIN students ON registrations.subject_id = subjects.subject_id AND registrations.level_id = levels.level_id AND registrations.teacher_id = teachers.teacher_id WHERE registrations.student_id = ? GROUP BY registrations.registration_id", (student_id,))
     rows = c.fetchall()
     db.close()
 
@@ -645,7 +646,7 @@ def get_levels(subject_id):
     
     return jsonify(levels)
 
-def add_attendance(student_id, subject_id, level_id, attend_date):
+def add_attendance(student_id, subject_id, level_id, attend_date: date):
 
     # Add attendance
     db = get_db()
@@ -788,7 +789,24 @@ def delete_attendance(student_id, subject_id, level_id, attendance_id):
 def attendances(student_id):
 
     if request.method == 'POST':
+
+        # Check registration
+        # Count attendance of this month
+        db = get_db()
+        c = db.cursor()
+        c.execute("SELECT COUNT(*) AS registration_count FROM registrations WHERE student_id = ?",
+                  (student_id, ))
+        data = c.fetchone()
+        db.close()
+
+        registration_count = data[0]
+
+        if registration_count <= 0:
+            flash("ยังไม่มีข้อมูลวิชาที่เรียน", "warning")
+            return redirect(url_for('students'))
+
         attendance_date = request.form['attendance_date']
+        attendance_date = datetime.strptime(attendance_date, '%Y-%m-%d').date()
 
         # Get subject_id and level_id from registrations according to student_id
         db = get_db()
@@ -818,10 +836,6 @@ def attendances(student_id):
     c.execute("SELECT attendance_id, date, student_id, subject_id, level_id FROM attendances WHERE student_id = ?", (student_id,))
     attendances = c.fetchall()
     db.close()
-
-    if len(attendances) == 0:
-        flash("ไม่มีประวัติการเข้าเรียน", "warning")
-        return redirect(url_for('students'))
 
     return render_template('attendances.html', student=student, attendances=attendances)
 
@@ -872,6 +886,19 @@ def payments(teacher_id):
     db.close()
 
     return render_template('payments.html', payments=payments, teacher=teacher)
+
+@app.route("/reset_payment/<teacher_id>", methods=['GET', 'POST'])
+def reset_payment(teacher_id):
+
+    # Reset teacher payment to 0
+    db = get_db()
+    c = db.cursor()
+    c.execute(
+        "UPDATE teachers SET payment = 0 WHERE teacher_id = ?", (teacher_id, ))
+    db.commit()
+    db.close()
+
+    return redirect(url_for('teachers'))
 
 
 @app.route("/receipt/<student_id>/<subject_id>/<level_id>", methods=['GET', 'POST'])

@@ -36,6 +36,7 @@
                     <th>Email</th>
                     <th>Phone</th>
                     <th>เงินที่ต้องจ่ายให้ครูเดือนนี้</th>
+                    <th>จ่ายให้ครูแล้ว</th>
                     <th>ลบ</th>
                 </tr>
             </thead>
@@ -63,6 +64,11 @@
                     </td>
 
                     <td>
+                        <button class="btn btn-success confirm_reset" data-bs-toggle="modal"
+                            data-bs-target="#confirm_reset" data-link="/reset_payment/{{ teacher.teacher_id }}">จ่ายแล้ว</button>
+                    </td>
+
+                    <td>
                         <a href="/delete/teacher?teacher_id={{ teacher.teacher_id }}">
                             <button class="btn btn-danger">ลบ</button>
                         </a>
@@ -71,9 +77,28 @@
                 {% endfor %}
 
             </tbody>
-
-
         </table>
+
+        <div class="modal fade" id="confirm_reset" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">ยืนยันการจ่ายเงิน</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        ยืนยันว่าจ่ายเงินแล้ว
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                        <a id="confirm_link" href="">
+                            <button type="button" class="btn btn-primary">ยืนยัน</button>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -87,6 +112,11 @@
         $('#payment_ratio').on('input', function () {
             var ratio = $(this).val() * 100;
             $('#payment_ratio_text').text(ratio + "%");
+        });
+
+        $('.confirm_reset').on('click', function () {
+            var link = $(this).data('link');
+            $("#confirm_link").attr("href", link);
         });
     });
 </script>

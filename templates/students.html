@@ -67,7 +67,7 @@
                     </td>
 
                     <td>
-                        <input class="form-check-input" type="checkbox" id="attendance" data-student-id="{{ student.student_id }}" {% if student.is_attended==1 %} checked="" if student.is_attended==1 %}
+                        <input class="form-check-input attendance" type="checkbox" id="attendance" data-student-id="{{ student.student_id }}" {% if student.is_attended==1 %} checked="" if student.is_attended==1 %}
                             checked disabled {% endif %}>
                         {{ student.attendance_id }}
 
@@ -101,7 +101,7 @@
     $(document).ready(function () {
         $('#student_table').DataTable();
 
-        $('#attendance').change(function () {
+        $('.attendance').change(function () {
             var student_id = $(this).data('student-id');
             let isChecked = $(this).is(':checked');
 
@@ -113,7 +113,7 @@
                         student_id: student_id,
                     },
                     success: function (data) {
-                        console.log(data);
+                        location.reload();
                     }
                 });
             } else {
@@ -124,12 +124,10 @@
                         student_id: student_id,
                     },
                     success: function (data) {
-                        console.log(data);
+                        location.reload();
                     }
                 });
             }
-
-            location.reload();
 
         });
     });

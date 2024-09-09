@@ -89,12 +89,12 @@
 
                                     {% for teacher in teachers %}
                                     {% if teacher.first %}
-                                    <option value="{{teachers.teacher_id}}" selected>{{ teacher.title + " " +
+                                    <option value="{{teacher.teacher_id}}" selected>{{ teacher.title + " " +
                                         teacher.f_name + "
                                         " + teacher.l_name }}</option>
                                     {% endif %}
 
-                                    <option value="{{teachers.teacher_id}}">{{ teacher.title + " " + teacher.f_name + "
+                                    <option value="{{teacher.teacher_id}}">{{ teacher.title + " " + teacher.f_name + "
                                         " +
                                         teacher.l_name }}</option>
                                     {% endfor %}
@@ -105,6 +105,11 @@
                             <div class="col mb-3">
                                 <label for="times" class="form-label">จำนวนครั้งที่จะเรียน</label>
                                 <input type="number" class="form-control" id="times" name="times">
+                            </div>
+
+                            <div class="col mb-3">
+                                <label for="schedule" class="form-label">วันเวลาที่เรียน</label>
+                                <input type="text" class="form-control" id="schedule" name="schedule">
                             </div>
 
                         </div>
@@ -125,6 +130,7 @@
                     <th>ชื่อวิชา</th>
                     <th>ระดับ</th>
                     <th>จำนวนครั้งที่เหลือ</th>
+                    <th>วันเวลาที่เรียน</th>
                     <th>ดูใบเสร็จ</th>
                     <th>ลบ</th>
                 </tr>
@@ -139,6 +145,7 @@
                     <td>{{ row.subject_name}}</td>
                     <td>{{ row.level_name}}</td>
                     <td>{{ row.time_left }} / {{ row.times }}</td>
+                    <td>{{ row.schedule }}</td>
                     <td>
                         <a href="/receipt/{{ row.student_id }}/{{ row.subject_id }}/{{ row.level_id }}">
                             <button class="btn btn-primary">ดูใบเสร็จ</button>
@@ -170,9 +177,7 @@
 
         $('#subject').change(function() {
             var subject_id = $(this).val();
-            console.log(subject_id);
-
-
+            
             $.ajax({
                 url: '/get_prices/' + subject_id,
                 type: 'GET',
