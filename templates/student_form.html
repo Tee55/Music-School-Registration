@@ -1,6 +1,12 @@
 <h4>ข้อมูลทั่วไป</h4>
 
 <div class="col-12 mb-3">
+    <label for="register_date" class="form-label">วันที่สมัคร</label>
+    <input type="text" class="form-control" id="register_date" name="register_date" {% if student %} value="{{student.register_date}}" {% endif %}>
+</div>
+
+
+<div class="col-12 mb-3">
     <label for="student_id" class="form-label">รหัสนักเรียน</label>
     <input type="text" class="form-control" id="student_id" name="student_id" {% if student %} value="{{ student.student_id}}" disabled {% endif %}>
 </div>
@@ -9,13 +15,15 @@
     <div class="col mb-3">
         <label for="title" class="form-label">คำนำหน้า</label>
         <select class="form-select" name="title" {% if student %} value="{{student.title}}" {% endif %}>
-            <option value="นาย" selected>นาย</option>
+            <option value="ด.ญ." selected>ด.ญ.</option>
+            <option value="ด.ช.">ด.ช.</option>
+            <option value="นาย" >นาย</option>
             <option value="นาง">นาง</option>
             <option value="นางสาว">นางสาว</option>
-            <option value="ด.ช.">ด.ช.</option>
-            <option value="ด.ญ.">ด.ญ.</option>
         </select>
     </div>
+
+    <!-- Thai Name -->
 
     <div class="col mb-3">
         <label for="f_name" class="form-label">ชื่อ</label>
@@ -25,6 +33,17 @@
     <div class="col mb-3">
         <label for="l_name" class="form-label">นามสกุล</label>
         <input type="text" class="form-control" id="l_name" name="l_name" {% if student %} value="{{student.l_name}}" {% endif %}>
+    </div>
+
+    <!-- Eng Name -->
+    <div class="col mb-3">
+        <label for="f_eng_name" class="form-label">ชื่ออังกฤษ</label>
+        <input type="text" class="form-control" id="f_eng_name" name="f_eng_name" {% if student %} value="{{student.f_eng_name}}" {% endif %}>
+    </div>
+
+    <div class="col mb-3">
+        <label for="l_eng_name" class="form-label">นามสกุลอังกฤษ</label>
+        <input type="text" class="form-control" id="l_eng_name" name="l_eng_name" {% if student %} value="{{student.l_eng_name}}" {% endif %}>
     </div>
 
     <div class="col mb-3">
@@ -39,9 +58,16 @@
     <textarea class="form-control" id="address" name="address" rows="2" {% if student %} value="{{student.address}}" {% endif %}></textarea>
 </div>
 
-<div class="col-12 mb-3">
-    <label for="dob" class="form-label">วันเกิด</label>
-    <input type="date" class="form-control" id="dob" name="dob" {% if student %} value="{{student.dob}}" {% endif %}>
+<div class="row mb-3">
+    <div class="col-6 mb-3">
+        <label for="dob" class="form-label">วันเกิด</label>
+        <input type="text" class="form-control" id="dob" name="dob" {% if student %} value="{{student.dob}}" {% endif %}>
+    </div>
+
+    <div class="col-6 mb-3">
+        <label for="age" class="form-label">วันเกิด</label>
+        <input type="number" class="form-control" id="age" name="age" {% if student %} value="{{student.age}}" {% endif %}>
+    </div>
 </div>
 
 <div class="col-12 mb-3">
@@ -95,3 +121,22 @@
     <label for="instruments" class="form-label">เครื่องดนตรีที่มี</label>
     <input type="text" class="form-control" id="instruments" name="instruments" {% if student %} value="{{student.instruments}}" {% endif %}>
 </div>
+
+
+<script>
+    $(document).ready(function () {
+        thaiDatepicker("#dob, #register_date");
+        function thaiDatepicker(el) {
+            $.datetimepicker.setLocale('th')
+            $(el).attr('readonly', true)
+            $(el).addClass('date-readonly')
+            $(el).datetimepicker({
+                timepicker: false,
+                format: 'd/m/Y',
+                lang: 'th',
+                yearOffset: 543,
+                validateOnBlur: false,
+            })
+        }
+    });
+</script>

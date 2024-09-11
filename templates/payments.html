@@ -13,7 +13,7 @@
                     <th>วิชา</th>
                     <th>ระดับ</th>
                     <th>จำนวน</th>
-                    <th>วันเวลาที่ได้รับ</th>
+                    <th>วันที่สอน</th>
                 </tr>
             </thead>
 
@@ -26,16 +26,17 @@
                     <td>{{ payment.subject_name }}</td>
                     <td>{{ payment.level_name }}</td>
                     <td>{{ payment.amount }}</td>
-                    <td>{{ payment.created_at }}</td>
+                    <td>{{ payment.date }}</td>
                 </tr>
                 {% endfor %}
 
             </tbody>
-
-
         </table>
 
-        <h4>ที่ต้องจ่ายให้ครูเดือนนี้: {{ teacher.payment }}</h4>
+        {% for monthly_payment in monthly_payments %}
+            <h4>ที่จ่ายให้เดือน {{ monthly_payment.month_year }}: {{ monthly_payment.total_amount }}</h4>
+        {% endfor %}
+
     </div>
 </div>
 

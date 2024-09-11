@@ -47,8 +47,13 @@
                     
                     <!-- Save button moved outside and aligned to the right -->
                     <ul class="navbar-nav mb-2 mb-lg-0 ms-auto">
+
                         <li class="nav-item">
-                            <a class="nav-link active" aria-current="page" href="/save-db">เซฟข้อมูล</a>
+                            <a class="nav-link active" aria-current="page" href="/export_excel">ส่งออกเป็น Excel</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link active" aria-current="page" data-bs-toggle="modal" data-bs-target="#upload_file">โหลด Excel ไฟล์ใส่ Database</a>
                         </li>
                     </ul>
                 </div>
@@ -56,6 +61,29 @@
             </div>
         </nav>
     </section>
+
+    <div class="modal fade" id="upload_file" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
+                    <div class="modal-header">
+                        <h5 class="modal-title">ใส่ไฟล์ Excel</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input id="file" type="file" name="file" accept=".xlsx">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+                        <button type="submit" class="btn btn-primary">โหลดข้อมูล</button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+
     {% endblock %}
 
     <!-- MainBody section-->

@@ -37,7 +37,7 @@
 
 <div class="col-12 mb-3">
     <label for="dob" class="form-label">วันเกิด</label>
-    <input type="date" class="form-control" id="dob" name="dob" {% if teacher %} value="{{teacher.dob}}" {% endif %}>
+    <input type="text" class="form-control" id="dob" name="dob" {% if teacher %} value="{{teacher.dob}}" {% endif %}>
 </div>
 
 <div class="col-12 mb-3">
@@ -62,3 +62,22 @@
             id="payment_ratio_text">{% if teacher %} {{teacher.payment_ratio * 100}} {% endif %}</span></label>
     <input type="range" class="form-range" id="payment_ratio" name="payment_ratio" min="0" max="1" step="0.1" {% if teacher %} value="{{teacher.payment_ratio}}" {% else %} value="0" {% endif %}>
 </div>
+
+
+<script>
+    $(document).ready(function () {
+        thaiDatepicker("#dob");
+        function thaiDatepicker(el) {
+            $.datetimepicker.setLocale('th')
+            $(el).attr('readonly', true)
+            $(el).addClass('date-readonly')
+            $(el).datetimepicker({
+                timepicker: false,
+                format: 'd/m/Y',
+                lang: 'th',
+                yearOffset: 543,
+                validateOnBlur: false,
+            })
+        }
+    });
+</script>

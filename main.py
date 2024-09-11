@@ -2,8 +2,10 @@ from datetime import date
 from datetime import datetime
 from io import BytesIO
 import os
-from flask import Flask, request, redirect, render_template, url_for, flash, jsonify, send_from_directory, send_file
+from flask import Flask, Response, request, redirect, render_template, url_for, flash, jsonify, send_from_directory, send_file
 import sqlite3
+import pandas as pd
+from werkzeug.utils import secure_filename
 
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
@@ -14,10 +16,15 @@ import webbrowser
 import threading
 
 app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['ALLOWED_EXTENSIONS'] = {'xlsx'}
 app.secret_key = os.urandom(24)
 
 DATABASE = './database.db'
 
+# Ensure upload folder exists
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
 
 def get_db():
     conn = sqlite3.connect(DATABASE)
@@ -34,9 +41,12 @@ def create_database():
               title TEXT NOT NULL,
               f_name TEXT NOT NULL,
               l_name TEXT NOT NULL,
+              f_eng_name TEXT,
+              l_eng_name TEXT,
               n_name TEXT,
               address TEXT,
-              dob DATE,
+              dob TEXT,
+              age INTEGER,
               job TEXT,
               email TEXT,
               phone_num TEXT,
@@ -46,6 +56,8 @@ def create_database():
               family_f_name TEXT,
               family_l_name TEXT,
               family_relationship TEXT,
+
+              register_date TEXT,
               
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )''')
@@ -57,13 +69,12 @@ def create_database():
               l_name TEXT NOT NULL,
               n_name TEXT,
               address TEXT,
-              dob DATE,
+              dob TEXT,
               job TEXT,
               email TEXT,
               phone_num TEXT,
 
               payment_ratio REAL,
-              payment INTEGER DEFAULT 0,
 
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )''')
@@ -141,13 +152,7 @@ def create_database():
     )''')
 
     # Data for testing
-    c.execute('''INSERT INTO students (student_id, title, f_name, l_name) VALUES (123, "นาย", "สมชาย", "สมหญิง")''')
     c.execute('''INSERT INTO teachers (teacher_id, title, f_name, l_name, payment_ratio) VALUES (987, "นาย", "Teerapath", "Sattabongkot", 0.5)''')
-    c.execute('''INSERT INTO registrations (student_id, subject_id, level_id, teacher_id, time_left, times, schedule) VALUES (123, 1, 1, 987, 5, 8, "วันอังคาร 10:00 - 12:00")''')
-
-    c.execute('''INSERT INTO attendances (student_id, subject_id, level_id, date) VALUES (123, 1, 1, "2024-08-17")''')
-    c.execute('''INSERT INTO attendances (student_id, subject_id, level_id, date) VALUES (123, 1, 1, "2024-08-18")''')
-    c.execute('''INSERT INTO attendances (student_id, subject_id, level_id, date) VALUES (123, 1, 1, "2024-08-19")''')
 
     # เปียโนเด็กพื้นฐาน
     c.execute('''INSERT INTO prices (subject_id, level_id, price) VALUES (1, 1, 2800), (1, 2, 3200), (1, 3, 3400)''')
@@ -249,11 +254,36 @@ def teachers(teacher_id=None):
     db = get_db()
     c = db.cursor()
     c.execute(
-        "SELECT teacher_id, f_name, l_name, n_name, email, phone_num, payment FROM teachers")
+        "SELECT teacher_id, f_name, l_name, n_name, email, phone_num FROM teachers")
     teachers = c.fetchall()
     db.close()
 
-    return render_template('teachers.html', teachers=teachers)
+    # Convert to dict
+    teachers = [dict(teacher) for teacher in teachers]
+
+
+    total_amount = 0
+    for teacher in teachers:
+
+        teacher_id = teacher['teacher_id']
+
+        # Get payment of this month
+        db = get_db()
+        c = db.cursor()
+        c.execute("""
+            SELECT
+                SUM(payments.amount) AS total_amount
+            FROM payments 
+            JOIN attendances ON payments.attendance_id = attendances.attendance_id
+            WHERE payments.teacher_id = ? and strftime('%Y-%m', attendances.date) = strftime('%Y-%m', 'now')
+        """, (teacher_id,))
+        payment = c.fetchone()
+        db.close()
+
+        teacher['payment'] = payment['total_amount']
+        total_amount += payment['total_amount']
+
+    return render_template('teachers.html', teachers=teachers, total_amount=total_amount)
 
 
 @app.route("/subjects", methods=['GET', 'POST'])
@@ -285,13 +315,30 @@ def add(category):
     if request.method == 'POST':
 
         if category == "student":
+
+            register_date = request.form['register_date']
+            if not register_date:
+                flash("กรุณากรอกวันที่ลงทะเบียน", "danger")
+                return redirect(url_for('students'))
+
             student_id = request.form['student_id']
             title = request.form['title']
             f_name = request.form['f_name']
             l_name = request.form['l_name']
+            
+            f_eng_name = request.form['f_eng_name']
+            l_eng_name = request.form['l_eng_name']
+
             n_name = request.form['n_name']
             address = request.form['address']
+
             dob = request.form['dob']
+            if not register_date:
+                flash("กรุณากรอกวันเกิด", "danger")
+                return redirect(url_for('students'))
+
+            age = request.form['age']
+
             job = request.form['job']
             email = request.form['email']
             phone_num = request.form['phone_num']
@@ -304,8 +351,8 @@ def add(category):
 
             db = get_db()
             c = db.cursor()
-            c.execute('''INSERT INTO students (student_id, title, f_name, l_name, n_name, address, dob, job, email, phone_num, instruments, family_title, family_f_name, family_l_name, family_relationship) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', (student_id, title, f_name, l_name, n_name, address, dob, job, email, phone_num, instruments, family_title, family_f_name, family_l_name, family_relationship))
+            c.execute('''INSERT INTO students (student_id, title, f_name, l_name, f_eng_name, l_eng_name, n_name, address, dob, age, job, email, phone_num, instruments, family_title, family_f_name, family_l_name, family_relationship, register_date) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', (student_id, title, f_name, l_name, f_eng_name, l_eng_name, n_name, address, dob, age, job, email, phone_num, instruments, family_title, family_f_name, family_l_name, family_relationship, register_date))
             db.commit()
             db.close()
 
@@ -349,6 +396,7 @@ def add(category):
 
             flash("เพิ่มวิชาสําเร็จ", "success")
             return redirect(url_for('subjects'))
+        
         elif category == "level":
 
             level_name = request.form['level_name']
@@ -392,7 +440,6 @@ def add(category):
             db.close()
 
             for row in rows:
-                print("here")
                 add_attendance(student_id, row[0], row[1], date.today())
 
             flash("เช็คชื่อเรียบร้อยแล้ว", "success")
@@ -665,113 +712,43 @@ def add_attendance(student_id, subject_id, level_id, attend_date: date):
     db.commit()
     db.close()
 
-    # Count attendance of attend_date month
+    # Get teacher_id, subject_price, teacher_payment_ratio
     db = get_db()
     c = db.cursor()
-    c.execute("SELECT COUNT(*) AS attendance_count FROM attendances WHERE student_id = ? and subject_id = ? and level_id = ? and strftime('%m', date) = ?",
-              (student_id, subject_id, level_id, attend_date.strftime('%m')))
-    data = c.fetchone()
+    c.execute(
+        """SELECT teachers.teacher_id, prices.price, teachers.payment_ratio FROM registrations
+        JOIN teachers JOIN prices 
+        ON registrations.teacher_id = teachers.teacher_id AND registrations.subject_id = prices.subject_id AND registrations.level_id = prices.level_id
+        WHERE registrations.student_id = ? AND registrations.subject_id = ? AND registrations.level_id = ?""", (student_id, subject_id, level_id))
+    row = c.fetchone()
     db.commit()
     db.close()
 
-    attendance_count = data[0]
+    # Calculate money that teacher will get
+    teacher_id = row[0]
+    subject_price = row[1] 
+    teacher_payment_ratio = row[2]
 
-    # If attend 4 times, add money to teacher account
-    if attendance_count != 0 and attendance_count % 4 == 0:
+    money = (subject_price * teacher_payment_ratio) // 4
 
-        db = get_db()
-        c = db.cursor()
-        c.execute(
-            """SELECT teachers.teacher_id, prices.price, teachers.payment_ratio FROM registrations
-            JOIN teachers JOIN prices 
-            ON registrations.teacher_id = teachers.teacher_id AND registrations.subject_id = prices.subject_id AND registrations.level_id = prices.level_id
-            WHERE registrations.student_id = ? AND registrations.subject_id = ? AND registrations.level_id = ?""", (student_id, subject_id, level_id))
-        row = c.fetchone()
-        db.commit()
-        db.close()
-
-        # Calculate money that teacher will get
-        teacher_id = row[0]
-        subject_price = row[1]
-        teacher_payment_ratio = row[2]
-
-        money = subject_price * teacher_payment_ratio
-
-        # Add money to teacher payment
-        db = get_db()
-        c = db.cursor()
-        c.execute(
-            "UPDATE teachers SET payment = payment + ? WHERE teacher_id = ?", (money, teacher_id))
-        db.commit()
-        db.close()
-
-        # Add transaction history to payments
-        db = get_db()
-        c = db.cursor()
-        c.execute("INSERT INTO payments (teacher_id, attendance_id, student_id, subject_id, level_id, amount) VALUES (?, ?, ?, ?, ?, ?)",
-                  (teacher_id, last_attendance_id, student_id, subject_id, level_id, money))
-        db.commit()
-        db.close()
+    # Add transaction history to payments
+    db = get_db()
+    c = db.cursor()
+    c.execute("INSERT INTO payments (teacher_id, attendance_id, student_id, subject_id, level_id, amount) VALUES (?, ?, ?, ?, ?, ?)",
+                (teacher_id, last_attendance_id, student_id, subject_id, level_id, money))
+    db.commit()
+    db.close()
 
 
 def delete_attendance(student_id, subject_id, level_id, attendance_id):
 
-    # Get date of this attendance
+    # Remove transaction history
     db = get_db()
     c = db.cursor()
-    c.execute("SELECT date FROM attendances WHERE attendance_id = ?",
-              (attendance_id,))
-    row = c.fetchone()
+    c.execute("DELETE FROM payments WHERE attendance_id = ?",
+                (attendance_id,))
+    db.commit()
     db.close()
-
-    month = datetime.strptime(row[0], '%Y-%m-%d').strftime('%m')
-
-    if month == date.today().strftime('%m'):
-        # Count attendance of this month
-        db = get_db()
-        c = db.cursor()
-        c.execute("SELECT COUNT(*) AS attendance_count FROM attendances WHERE student_id = ? and subject_id = ? and level_id = ? and strftime('%m', date) = ?",
-                  (student_id, subject_id, level_id, date.today().strftime('%m')))
-        data = c.fetchone()
-        db.close()
-
-        attendance_count = data[0]
-
-        # If attend 4 times, remove money from teacher this month payment
-        if attendance_count != 0 and attendance_count % 4 == 0:
-
-            db = get_db()
-            c = db.cursor()
-            c.execute(
-                """SELECT teachers.teacher_id, prices.price, teachers.payment_ratio FROM registrations
-                JOIN teachers JOIN prices 
-                ON registrations.teacher_id = teachers.teacher_id AND registrations.subject_id = prices.subject_id AND registrations.level_id = prices.level_id
-                WHERE registrations.student_id = ? AND registrations.subject_id = ? AND registrations.level_id = ?""", (student_id, subject_id, level_id))
-            row = c.fetchone()
-            db.close()
-
-            # Calculate money that teacher will get
-            teacher_id = row[0]
-            subject_price = row[1]
-            teacher_payment_ratio = row[2]
-
-            money = subject_price * teacher_payment_ratio
-
-            # Add money to teacher payment
-            db = get_db()
-            c = db.cursor()
-            c.execute(
-                "UPDATE teachers SET payment = payment - ? WHERE teacher_id = ?", (money, teacher_id))
-            db.commit()
-            db.close()
-
-            # Remove transaction history
-            db = get_db()
-            c = db.cursor()
-            c.execute("DELETE FROM payments WHERE attendance_id = ?",
-                      (attendance_id,))
-            db.commit()
-            db.close()
 
     # Delete attendance
     db = get_db()
@@ -784,40 +761,30 @@ def delete_attendance(student_id, subject_id, level_id, attendance_id):
     db.commit()
     db.close()
 
-
 @app.route("/attendances/<student_id>", methods=['GET', 'POST'])
 def attendances(student_id):
 
     if request.method == 'POST':
 
-        # Check registration
-        # Count attendance of this month
-        db = get_db()
-        c = db.cursor()
-        c.execute("SELECT COUNT(*) AS registration_count FROM registrations WHERE student_id = ?",
-                  (student_id, ))
-        data = c.fetchone()
-        db.close()
+        data = request.get_json()
+        dates = data.get('dates', [])
 
-        registration_count = data[0]
+        for attendance_date in dates:
+            attendance_date = datetime.strptime(attendance_date, '%d/%m/%Y')
 
-        if registration_count <= 0:
-            flash("ยังไม่มีข้อมูลวิชาที่เรียน", "warning")
-            return redirect(url_for('students'))
+            # Convert year to Georgian year
+            attendance_date = attendance_date.replace(year=attendance_date.year - 543).date()
 
-        attendance_date = request.form['attendance_date']
-        attendance_date = datetime.strptime(attendance_date, '%Y-%m-%d').date()
+            # Get subject_id and level_id from registrations according to student_id
+            db = get_db()
+            c = db.cursor()
+            c.execute(
+                "SELECT subject_id, level_id FROM registrations WHERE student_id = ?", (student_id,))
+            rows = c.fetchall()
+            db.close()
 
-        # Get subject_id and level_id from registrations according to student_id
-        db = get_db()
-        c = db.cursor()
-        c.execute(
-            "SELECT subject_id, level_id FROM registrations WHERE student_id = ?", (student_id,))
-        rows = c.fetchall()
-        db.close()
-
-        for row in rows:
-            add_attendance(student_id, row[0], row[1], attendance_date)
+            for row in rows:
+                add_attendance(student_id, row[0], row[1], attendance_date)
 
     # Get student
     db = get_db()
@@ -836,6 +803,18 @@ def attendances(student_id):
     c.execute("SELECT attendance_id, date, student_id, subject_id, level_id FROM attendances WHERE student_id = ?", (student_id,))
     attendances = c.fetchall()
     db.close()
+
+    # Convert to dict
+    attendances = [dict(attendance) for attendance in attendances]
+
+    # Convert date to dd/mm/yyyy
+    for attendance in attendances:
+        date_obj = datetime.strptime(attendance['date'], '%Y-%m-%d')
+
+        # Convert Georgian year to Thai year
+        new_date_obj = date_obj.replace(year=date_obj.year + 543).date()
+
+        attendance['date'] = new_date_obj.strftime('%d/%m/%Y')
 
     return render_template('attendances.html', student=student, attendances=attendances)
 
@@ -876,30 +855,38 @@ def payments(teacher_id):
     teacher = c.fetchone()
     db.close()
 
-    # Get payment from teacher_id
+    # Get payments by teacher
     db = get_db()
     c = db.cursor()
-    c.execute("""SELECT students.f_name, students.l_name, students.n_name, subjects.subject_name, levels.level_name, payments.amount, payments.created_at FROM payments 
-              JOIN students JOIN subjects JOIN levels ON payments.student_id = students.student_id AND payments.subject_id = subjects.subject_id AND payments.level_id = levels.level_id 
+    c.execute("""SELECT students.f_name, students.l_name, students.n_name, subjects.subject_name, levels.level_name, payments.amount, attendances.date FROM payments 
+              JOIN students ON payments.student_id = students.student_id
+              JOIN subjects ON payments.subject_id = subjects.subject_id
+              JOIN levels ON payments.level_id = levels.level_id
+              JOIN attendances ON payments.attendance_id = attendances.attendance_id
               WHERE teacher_id = ?""", (teacher_id,))
     payments = c.fetchall()
     db.close()
 
-    return render_template('payments.html', payments=payments, teacher=teacher)
-
-@app.route("/reset_payment/<teacher_id>", methods=['GET', 'POST'])
-def reset_payment(teacher_id):
-
-    # Reset teacher payment to 0
+    # Combine payment in each month
     db = get_db()
     c = db.cursor()
-    c.execute(
-        "UPDATE teachers SET payment = 0 WHERE teacher_id = ?", (teacher_id, ))
-    db.commit()
+    c.execute("""
+        SELECT
+            strftime('%Y-%m', attendances.date) AS month_year,
+            SUM(payments.amount) AS total_amount
+        FROM payments 
+        JOIN attendances ON payments.attendance_id = attendances.attendance_id
+        JOIN students ON payments.student_id = students.student_id
+        JOIN subjects ON payments.subject_id = subjects.subject_id
+        JOIN levels ON payments.level_id = levels.level_id
+        WHERE payments.teacher_id = ?
+        GROUP BY month_year
+        ORDER BY month_year DESC
+    """, (teacher_id,))
+    monthly_payments = c.fetchall()
     db.close()
-
-    return redirect(url_for('teachers'))
-
+    
+    return render_template('payments.html', payments=payments, monthly_payments=monthly_payments, teacher=teacher)
 
 @app.route("/receipt/<student_id>/<subject_id>/<level_id>", methods=['GET', 'POST'])
 def receipt(student_id, subject_id, level_id):
@@ -933,11 +920,91 @@ def receipt(student_id, subject_id, level_id):
         flash("จำนวนครั้งหาร 4 ไม่ลงตัว", "warning")
         return redirect(url_for('students'))
 
+@app.route('/export_excel')
+def export_excel():
+    # Connect to your SQLite database
+    conn = sqlite3.connect('database.db')
+    
+    # Create a dictionary to hold DataFrames
+    tables = {
+        'students': 'SELECT * FROM students',
+        'teachers': 'SELECT * FROM teachers',
+        'subjects': 'SELECT * FROM subjects',
+        'levels': 'SELECT * FROM levels',
+        'attendances': 'SELECT * FROM attendances',
+        'registrations': 'SELECT * FROM registrations',
+        'prices': 'SELECT * FROM prices',
+        'payments': 'SELECT * FROM payments',
+    }
+    
+    # Create a BytesIO buffer to hold the Excel file in memory
+    output = BytesIO()
+    
+    # Create an Excel writer object
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        for sheet_name, query in tables.items():
+            # Query the data
+            df = pd.read_sql_query(query, conn)
+            
+            # Write the DataFrame to a sheet in the Excel file
+            df.to_excel(writer, sheet_name=sheet_name, index=False)
+    
+    # Close the connection
+    conn.close()
+    
+    # Prepare the response
+    output.seek(0)
+    return Response(
+        output.getvalue(),
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": "attachment;filename=output.xlsx"}
+    )
 
-@app.route('/save-db', methods=['GET', 'POST'])
-def save_db():
-    return send_file(DATABASE, as_attachment=True, download_name='database.db')
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        flash('No file part')
+        return redirect(request.url)
+    
+    file = request.files['file']
+    
+    if file.filename == '':
+        flash('No selected file')
+        return redirect(request.url)
+    
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+        
+        # Import the file into the SQLite database
+        import_excel_to_sqlite(file_path, 'database.db')
+        
+        flash('File successfully uploaded and imported')
+        return redirect(url_for('students'))
+    
+    flash('Invalid file format')
+    return redirect(request.url)
+
+def import_excel_to_sqlite(excel_file_path, sqlite_db_path):
+    # Read the Excel file
+    xls = pd.ExcelFile(excel_file_path)
+    
+    # Connect to the SQLite database
+    conn = sqlite3.connect(sqlite_db_path)
+    
+    # Loop through each sheet in the Excel file
+    for sheet_name in xls.sheet_names:
+        df = pd.read_excel(xls, sheet_name=sheet_name)
+        
+        # Write the DataFrame to the SQLite database
+        df.to_sql(sheet_name, conn, if_exists='replace', index=False)
+    
+    # Close the connection
+    conn.close()
 
 @app.route('/generate-pdf', methods=['GET', 'POST'])
 def generate_pdf():

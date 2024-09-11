@@ -5,28 +5,36 @@
 <div class="row">
     <div id="content" class="col p-3">
 
-        <h2>ประวัติการมาเข้าเรียนของ {{ student.title + " " + student.f_name + " " + student.l_name + " " }} ({{ student.n_name }})</h2>
+        <h2>ประวัติการมาเข้าเรียนของ {{ student.title + " " + student.f_name + " " + student.l_name + " " }} ({{
+            student.n_name }})</h2>
 
         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add_attendace">เพิ่มประวัติ</button>
 
         <div class="modal fade" id="add_attendace" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
-                    <form action="/attendances/{{ student.student_id }}" method="post">
+                    <form id="attendance_form" data-student-id="{{ student.student_id }}">
                         <div class="modal-header">
                             <h5 class="modal-title">เพิ่มประวัติ</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <div class="col-12 mb-3">
-                                <label for="attendance_date" class="form-label">วันที่มา</label>
-                                <input type="date" class="form-control" id="attendance_date" name="attendance_date">
+                            <div class="col mb-3">
+                                <label for="startDate" class="form-label">Start Date</label>
+                                <input type="text" class="form-control" id="startDate" required>
                             </div>
-                            
+                            <div class="col mb-3">
+                                <label for="numWeeks" class="form-label">จำนวนสัปดาห์ที่ต้องการจะเพิ่ม</label>
+                                <input type="number" class="form-control" id="numWeeks" value="5" min="0" required>
+                            </div>
+                            <div class="col mb-3">
+                                <label for="generatedDates" class="form-label">วันต่อไปนี้จะถูกเพิ่ม</label>
+                                <ul id="generatedDates" class="list-group"></ul>
+                            </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
-                            <button type="submit" class="btn btn-primary">เพิ่ม</button>
+                            <button id="submit_button" type="submit" class="btn btn-primary">เพิ่ม</button>
                         </div>
                     </form>
 
@@ -51,7 +59,8 @@
                     <td>{{ attendance.attendance_id }}</td>
                     <td>{{ attendance.date }}</td>
                     <td>
-                        <a href="/delete/attendance?student_id={{ student.student_id }}&subject_id={{ attendance.subject_id }}&level_id={{ attendance.level_id }}&attendance_id={{ attendance.attendance_id }}">
+                        <a
+                            href="/delete/attendance?student_id={{ student.student_id }}&subject_id={{ attendance.subject_id }}&level_id={{ attendance.level_id }}&attendance_id={{ attendance.attendance_id }}">
                             <button class="btn btn-danger">ลบ</button>
                         </a>
                     </td>
@@ -70,7 +79,99 @@
 {% block scripts %}
 <script>
     $(document).ready(function () {
+        $('#submit_button').hide();
+
         $('#history_table').DataTable();
+
+        thaiDatepicker("#startDate");
+        function thaiDatepicker(el) {
+            $.datetimepicker.setLocale('th')
+            $(el).attr('readonly', true)
+            $(el).addClass('date-readonly')
+            $(el).datetimepicker({
+                timepicker: false,
+                format: 'd/m/Y',
+                lang: 'th',
+                yearOffset: 543,
+                validateOnBlur: false,
+            })
+        }
+
+        function formatThaiDate(date) {
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Months are zero-based
+            const year = date.getFullYear() + 543; // Convert Gregorian year to Thai Buddhist year
+
+            return `${day}/${month}/${year}`;
+        }
+
+        function parseDateString(dateStr) {
+            // Split the input string by '/' to extract day, month, and year
+            var [day, month, year] = dateStr.split('/').map(part => parseInt(part, 10));
+
+            // Subtract 543 from the year to convert Thai year to Gregorian year
+            year = year - 543
+
+            // Create and return the new Date object (month is 0-based in JavaScript)
+            return new Date(year, month - 1, day);
+        }
+
+        function addDays(date, days) {
+            const newDate = new Date(date);
+            newDate.setDate(newDate.getDate() + days);
+            return newDate;
+        }
+
+        $('#attendance_form').on('change', function () {
+            var startDate = $('#startDate').val();
+            var numWeeks = $('#numWeeks').val();
+
+            if (!startDate || !numWeeks) {
+                alert('Please enter all information.');
+                return;
+            }
+
+            startDate = parseDateString(startDate);
+            numWeeks = parseInt(numWeeks);
+
+            const dates = [];
+            dates.push(startDate);
+            for (let i = 1; i <= numWeeks; i++) {
+                const newDate = addDays(startDate, 7 * i);
+                dates.push(newDate);
+            }
+
+            $('#generatedDates').empty();
+            dates.forEach(date => {
+                const formattedDate = formatThaiDate(date);
+                $('#generatedDates').append(`<li class="list-group-item">${formattedDate}</li>`);
+            });
+
+            $('#submit_button').show();
+        });
+
+        $('#attendance_form').on('submit', function (event) {
+
+            event.preventDefault();
+
+            var student_id = $(this).data('student-id');
+            var dates = $('#generatedDates li').map(function () {
+                return $(this).text();
+            }).get();
+
+            $.ajax({
+                url: '/attendances/' + student_id,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ dates: dates }),
+                success: function (response) {
+                    location.reload();
+                },
+                error: function (xhr, status, error) {
+                    console.log('An error occurred: ' + error);
+                }
+            });
+        });
     });
 </script>
 {% endblock %}

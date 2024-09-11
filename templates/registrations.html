@@ -52,14 +52,9 @@
                             <div class="row mb-3">
                                 <div class="col mb-3">
                                     <label for="subject_id" class="form-label">วิชาที่จะเรียน</label>
-                                    <select class="form-select" id="subject" name="subject_id">
-
+                                    <select class="form-select" id="subject" name="subject_id" >
+                                        <option value="" selected disabled>-- Select a subject --</option>
                                         {% for subject in subjects %}
-                                        {% if subject.first %}
-                                        <option value="{{subject.subject_id}}" selected>{{ subject.subject_name }}
-                                        </option>
-                                        {% endif %}
-
                                         <option value="{{subject.subject_id}}">{{ subject.subject_name }}</option>
                                         {% endfor %}
 
