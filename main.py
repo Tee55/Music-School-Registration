@@ -31,7 +31,6 @@ def get_db():
     conn.row_factory = sqlite3.Row
     return conn
 
-
 def create_database():
 
     db = get_db()
@@ -280,8 +279,9 @@ def teachers(teacher_id=None):
         payment = c.fetchone()
         db.close()
 
-        teacher['payment'] = payment['total_amount']
-        total_amount += payment['total_amount']
+        payment_amount = payment['total_amount'] if payment['total_amount'] is not None else 0
+        teacher['payment'] = payment_amount
+        total_amount += payment_amount
 
     return render_template('teachers.html', teachers=teachers, total_amount=total_amount)
 
@@ -673,7 +673,14 @@ def registrations(student_id):
     # Get registrations according to student_id
     db = get_db()
     c = db.cursor()
-    c.execute("SELECT registrations.registration_id, students.student_id, subjects.subject_id, levels.level_id, subjects.subject_name, levels.level_name, teachers.n_name, registrations.time_left, registrations.times, registrations.schedule FROM registrations JOIN subjects JOIN levels JOIN teachers JOIN students ON registrations.subject_id = subjects.subject_id AND registrations.level_id = levels.level_id AND registrations.teacher_id = teachers.teacher_id WHERE registrations.student_id = ? GROUP BY registrations.registration_id", (student_id,))
+    c.execute('''SELECT registrations.registration_id, students.student_id, subjects.subject_id, levels.level_id, subjects.subject_name, levels.level_name, teachers.n_name, registrations.time_left, registrations.times, registrations.schedule 
+              FROM registrations 
+              JOIN subjects ON registrations.subject_id = subjects.subject_id
+              JOIN levels ON registrations.level_id = levels.level_id
+              JOIN teachers ON registrations.teacher_id = teachers.teacher_id
+              JOIN students ON registrations.student_id = students.student_id
+              WHERE registrations.student_id = ? 
+              GROUP BY registrations.registration_id''', (student_id,))
     rows = c.fetchall()
     db.close()
 
@@ -684,7 +691,10 @@ def get_levels(subject_id):
     db = get_db()
     c = db.cursor()
     # Get levels based on the selected subject
-    c.execute("SELECT levels.level_id, levels.level_name FROM prices JOIN levels ON prices.level_id = levels.level_id WHERE subject_id = ?", (subject_id,))
+    c.execute('''SELECT levels.level_id, levels.level_name 
+              FROM prices 
+              JOIN levels ON prices.level_id = levels.level_id 
+              WHERE subject_id = ?''', (subject_id,))
     rows = c.fetchall()
     db.close()
 
@@ -717,8 +727,8 @@ def add_attendance(student_id, subject_id, level_id, attend_date: date):
     c = db.cursor()
     c.execute(
         """SELECT teachers.teacher_id, prices.price, teachers.payment_ratio FROM registrations
-        JOIN teachers JOIN prices 
-        ON registrations.teacher_id = teachers.teacher_id AND registrations.subject_id = prices.subject_id AND registrations.level_id = prices.level_id
+        JOIN teachers ON registrations.teacher_id = teachers.teacher_id
+        JOIN prices ON registrations.subject_id = prices.subject_id AND registrations.level_id = prices.level_id
         WHERE registrations.student_id = ? AND registrations.subject_id = ? AND registrations.level_id = ?""", (student_id, subject_id, level_id))
     row = c.fetchone()
     db.commit()
@@ -824,7 +834,9 @@ def prices(subject_id):
 
     db = get_db()
     c = db.cursor()
-    c.execute("SELECT * FROM prices JOIN levels ON prices.level_id = levels.level_id WHERE subject_id = ?", (subject_id,))
+    c.execute('''SELECT * FROM prices 
+              JOIN levels ON prices.level_id = levels.level_id 
+              WHERE subject_id = ?''', (subject_id,))
     prices = c.fetchall()
     db.close()
 
@@ -907,8 +919,10 @@ def receipt(student_id, subject_id, level_id):
     c = db.cursor()
     c.execute(
         """SELECT registrations.times, prices.price, students.f_name, students.student_id, students.title, students.l_name, students.n_name, subjects.subject_name, levels.level_name FROM registrations 
-        JOIN students JOIN subjects JOIN levels JOIN prices
-        ON registrations.student_id = students.student_id AND registrations.subject_id = subjects.subject_id AND registrations.level_id = levels.level_id AND registrations.subject_id = prices.subject_id
+        JOIN students ON registrations.student_id = students.student_id
+        JOIN subjects ON registrations.subject_id = subjects.subject_id
+        JOIN levels ON registrations.level_id = levels.level_id
+        JOIN prices ON subjects.subject_id = prices.subject_id and levels.level_id = prices.level_id
         WHERE registrations.student_id = ? and registrations.subject_id = ? and registrations.level_id = ?""", (student_id, subject_id, level_id))
     data = c.fetchone()
     db.close()
@@ -1021,6 +1035,7 @@ def generate_pdf():
         buffer = BytesIO()
 
         c = canvas.Canvas(buffer, pagesize=A4)
+        c.setDash(1, 2)
         width, height = A4
 
         pdfmetrics.registerFont(TTFont('THSarabunNEW', os.path.join(
@@ -1043,28 +1058,65 @@ def generate_pdf():
         c.setFont("THSarabunNEW", 16)
         c.drawCentredString(width / 2, height - 190, "SUPANIT MUSIC ACADEMY")
 
+        ################################################################################
+        
         c.drawString(400, height - 220, "วันที่:")
         c.drawString(450, height - 220, date.today().strftime("%d/%m/%Y"))
 
+        ################################################################################
+
         c.drawString(400, height - 240, "เลขที่:")
-        c.drawString(450, height - 240, "5410090863")
+        c.line(440, height - 240 - 2, 510, height - 240 - 2)
+
+        ################################################################################
 
         c.drawString(60, height - 260, "ได้รับเงินจาก:")
         c.drawString(120, height - 260, title + " " + f_name + " " + l_name)
 
+        # Draw a dashed line
+        c.line(120, height - 260 - 2, 240, height - 260 - 2)
+
         c.drawString(240, height - 260, "วิชา:")
         c.drawString(300, height - 260, subject)
+
+        c.line(300, height - 260 - 2, 450, height - 260 - 2)
+
+        ################################################################################
 
         c.drawString(60, height - 280, "ชำระสำหรับ:")
         c.drawString(120, height - 280, "ค่าเรียน" +
                      " " + times + " " + "ครั้ง")
 
+        c.line(120, height - 280 - 2, 240, height - 280 - 2)
+
         c.drawString(240, height - 280, "จำนวนเงิน:")
-        c.drawString(300, height - 280, payment)
+        c.drawString(300, height - 280, payment + " " + "บาท")
+
+        c.line(300, height - 280 - 2, 450, height - 280 - 2)
 
         c.setFont("THSarabunNEW", 16)
         c.drawCentredString(width / 2, height - 460,
                             "ใบเสร็จรับเงินที่ถูกต้อง จะต้องมีลายเซ็นของเจ้าหน้าที่ผู้รับมอบอำนาจ และประทับตราโรงเรียน")
+
+
+        ################################################################################
+
+        c.drawString(60, height - 320, "รับชำระ:")
+
+        draw_checkbox(c, 120, height - 320, size=12, checked=False)
+        c.drawString(140, height - 320, "บัตรเครดิต/Credit Card")
+
+        draw_checkbox(c, 300, height - 320, size=12, checked=False)
+        c.drawString(320, height - 320, "เงินสด/Cash")
+        
+        ################################################################################
+
+        c.drawString(300, height - 400, "ผู้รับเงิน:")
+        c.line(350, height - 400 - 2, 500, height - 400 - 2)
+
+        ################################################################################
+
+        c.setDash([])
 
         c.rect(50, height - 480, width - 80, 450, stroke=1, fill=0)
 
@@ -1075,6 +1127,21 @@ def generate_pdf():
 
         return send_file(buffer, as_attachment=True, download_name='receipt.pdf', mimetype='application/pdf')
 
+def draw_checkbox(c: canvas.Canvas, x, y, size=10, checked=False):
+
+    c.setDash([])
+
+    # Draw the box
+    c.setLineWidth(1)
+    c.rect(x, y, size, size)
+
+    # Draw the checkmark if checked
+    if checked:
+        c.setLineWidth(1.5)
+        c.line(x, y, x + size, y + size)
+        c.line(x, y + size, x + size, y)
+    
+    c.setDash(1, 2)
 
 def open_browser():
     webbrowser.open_new('http://127.0.0.1:5000/')

@@ -28,10 +28,12 @@
                             <div class="row mb-3">
                                 <div class="col mb-3">
                                     <label for="title" class="form-label">คำนำหน้า</label>
-                                    <select class="form-select" id="title" name="title" value="{{student.title}}">
-                                        <option selected>นาย</option>
-                                        <option value="1">นาง</option>
-                                        <option value="2">นางสาว</option>
+                                    <select class="form-select" id="title" name="title">
+                                        <option value="ด.ญ." {% if student and student.title == "ด.ญ." %}selected{% endif %}>ด.ญ.</option>
+                                        <option value="ด.ช." {% if student and student.title == "ด.ช." %}selected{% endif %}>ด.ช.</option>
+                                        <option value="นาย" {% if student and student.title == "นาย" %}selected{% endif %}>นาย</option>
+                                        <option value="นาง" {% if student and student.title == "นาง" %}selected{% endif %}>นาง</option>
+                                        <option value="นางสาว" {% if student and student.title == "นางสาว" %}selected{% endif %}>นางสาว</option>
                                     </select>
                                 </div>
 
@@ -99,7 +101,7 @@
 
                             <div class="col mb-3">
                                 <label for="times" class="form-label">จำนวนครั้งที่จะเรียน</label>
-                                <input type="number" class="form-control" id="times" name="times">
+                                <input type="number" class="form-control" id="times" name="times" min="4">
                             </div>
 
                             <div class="col mb-3">

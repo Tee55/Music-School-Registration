@@ -14,12 +14,12 @@
 <div class="row mb-3">
     <div class="col mb-3">
         <label for="title" class="form-label">คำนำหน้า</label>
-        <select class="form-select" name="title" {% if student %} value="{{student.title}}" {% endif %}>
-            <option value="ด.ญ." selected>ด.ญ.</option>
-            <option value="ด.ช.">ด.ช.</option>
-            <option value="นาย" >นาย</option>
-            <option value="นาง">นาง</option>
-            <option value="นางสาว">นางสาว</option>
+        <select class="form-select" id="title" name="title">
+            <option value="ด.ญ." {% if student and student.title == "ด.ญ." %}selected{% endif %}>ด.ญ.</option>
+            <option value="ด.ช." {% if student and  student.title == "ด.ช." %}selected{% endif %}>ด.ช.</option>
+            <option value="นาย" {% if student and  student.title == "นาย" %}selected{% endif %}>นาย</option>
+            <option value="นาง" {% if student and  student.title == "นาง" %}selected{% endif %}>นาง</option>
+            <option value="นางสาว" {% if student and  student.title == "นางสาว" %}selected{% endif %}>นางสาว</option>
         </select>
     </div>
 
@@ -65,8 +65,8 @@
     </div>
 
     <div class="col-6 mb-3">
-        <label for="age" class="form-label">วันเกิด</label>
-        <input type="number" class="form-control" id="age" name="age" {% if student %} value="{{student.age}}" {% endif %}>
+        <label for="age" class="form-label">อายุ</label>
+        <input type="number" class="form-control" min="0" id="age" name="age" {% if student %} value="{{student.age}}" {% endif %}>
     </div>
 </div>
 

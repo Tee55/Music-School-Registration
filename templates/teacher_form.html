@@ -6,10 +6,12 @@
 <div class="row mb-3">
     <div class="col mb-3">
         <label for="title" class="form-label">คำนำหน้า</label>
-        <select class="form-select" name="title" {% if teacher %} value="{{ teacher.title}}" {% endif %}>
-            <option value="นาย" selected>นาย</option>
-            <option value="นาง">นาง</option>
-            <option value="นางสาว">นางสาว</option>
+        <select class="form-select" name="title">
+            <option value="นาย" {% if teacher and  teacher.title == "นาย" %}selected{% endif %}>นาย</option>
+            <option value="นาง" {% if teacher and  teacher.title == "นาง" %}selected{% endif %}>นาง</option>
+            <option value="นางสาว" {% if teacher and  teacher.title == "นางสาว" %}selected{% endif %}>นางสาว</option>
+            <option value="ด.ญ." {% if teacher and teacher.title == "ด.ญ." %}selected{% endif %}>ด.ญ.</option>
+            <option value="ด.ช." {% if teacher and  teacher.title == "ด.ช." %}selected{% endif %}>ด.ช.</option>
         </select>
     </div>
 
