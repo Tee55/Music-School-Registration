@@ -5,7 +5,6 @@ import os
 from flask import Flask, Response, request, redirect, render_template, url_for, flash, jsonify, send_from_directory, send_file
 import sqlite3
 import pandas as pd
-from werkzeug.utils import secure_filename
 
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
@@ -16,15 +15,10 @@ import webbrowser
 import threading
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['ALLOWED_EXTENSIONS'] = {'xlsx'}
 app.secret_key = os.urandom(24)
 
 DATABASE = './database.db'
-
-# Ensure upload folder exists
-if not os.path.exists(app.config['UPLOAD_FOLDER']):
-    os.makedirs(app.config['UPLOAD_FOLDER'])
+UPLOAD_FOLDER = './uploads/'
 
 def get_db():
     conn = sqlite3.connect(DATABASE)
@@ -180,6 +174,10 @@ def main():
         os.makedirs(os.path.dirname(DATABASE), exist_ok=True)
         create_database()
 
+    # Ensure upload folder exists
+    if not os.path.exists(UPLOAD_FOLDER):
+        os.makedirs(UPLOAD_FOLDER)
+
     if request.method == 'POST':
         username_login = request.form['username_login']
 
@@ -259,14 +257,11 @@ def teachers(teacher_id=None):
 
     # Convert to dict
     teachers = [dict(teacher) for teacher in teachers]
-
-
-    total_amount = 0
     for teacher in teachers:
 
         teacher_id = teacher['teacher_id']
 
-        # Get payment of this month
+        # Get summation of payment of the teachers of each month
         db = get_db()
         c = db.cursor()
         c.execute("""
@@ -281,9 +276,19 @@ def teachers(teacher_id=None):
 
         payment_amount = payment['total_amount'] if payment['total_amount'] is not None else 0
         teacher['payment'] = payment_amount
-        total_amount += payment_amount
 
-    return render_template('teachers.html', teachers=teachers, total_amount=total_amount)
+    # Group by month, get summation of payment
+    db = get_db()
+    c = db.cursor()
+    c.execute(
+        '''SELECT strftime('%Y-%m', attendances.date) AS month_year, SUM(payments.amount) AS total_amount 
+        FROM payments 
+        JOIN attendances ON payments.attendance_id = attendances.attendance_id
+        GROUP BY month_year''')
+    total_monthly_payments = c.fetchall()
+    db.close()
+
+    return render_template('teachers.html', teachers=teachers, total_monthly_payments=total_monthly_payments)
 
 
 @app.route("/subjects", methods=['GET', 'POST'])
@@ -705,6 +710,18 @@ def get_levels(subject_id):
 
 def add_attendance(student_id, subject_id, level_id, attend_date: date):
 
+    # Check if attend_date already exist in attendances
+    db = get_db()
+    c = db.cursor()
+    c.execute("SELECT * FROM attendances WHERE student_id = ? AND subject_id = ? AND level_id = ? AND date = ?",
+              (student_id, subject_id, level_id, attend_date))
+    row = c.fetchone()
+    db.close()
+
+    if row:
+        flash("วันที่ " + str(attend_date) + " เช็คชื่อไปแล้ว", "warning")
+        return
+
     # Add attendance
     db = get_db()
     c = db.cursor()
@@ -796,6 +813,8 @@ def attendances(student_id):
             for row in rows:
                 add_attendance(student_id, row[0], row[1], attendance_date)
 
+        return jsonify({'message': 'Success'}) 
+
     # Get student
     db = get_db()
     c = db.cursor()
@@ -810,7 +829,9 @@ def attendances(student_id):
     # Get attendance history
     db = get_db()
     c = db.cursor()
-    c.execute("SELECT attendance_id, date, student_id, subject_id, level_id FROM attendances WHERE student_id = ?", (student_id,))
+    c.execute('''SELECT attendance_id, date, student_id, subject_id, level_id 
+              FROM attendances 
+              WHERE student_id = ?''', (student_id,))
     attendances = c.fetchall()
     db.close()
 
@@ -975,7 +996,7 @@ def export_excel():
     )
 
 def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'xlsx'}
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -990,8 +1011,7 @@ def upload_file():
         return redirect(request.url)
     
     if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file_path = os.path.join(UPLOAD_FOLDER, file.filename)
         file.save(file_path)
         
         # Import the file into the SQLite database
@@ -1048,15 +1068,14 @@ def generate_pdf():
         c.drawCentredString(width / 2, height - 120, "RECEIPT")
 
         c.setFont("THSarabunNEW", 20)
-        c.drawCentredString(width / 2, height - 140, "ศุภนิจการดนตรี")
+        c.drawCentredString(width / 2, height - 140, "โรงเรียนศุภนิจการดนตรีและภาษา Supanit Music & Language School")
 
         c.setFont("THSarabunNEW", 10)
         c.drawCentredString(width / 2, height - 160,
-                            "55/9 ถนนวัชรพล แขวงท่าแร้ง เขตบางเขน กรุงเทพฯ")
-        c.drawCentredString(width / 2, height - 170, "โทร. 02-948 2644")
+                            "888/5 หมู่ 4 ถนนวัชรพล แขวงคลองถนน เขตสายไหม กรุงเทพ 10220")
+        c.drawCentredString(width / 2, height - 170, "โทร. 02-1530775-6")
 
         c.setFont("THSarabunNEW", 16)
-        c.drawCentredString(width / 2, height - 190, "SUPANIT MUSIC ACADEMY")
 
         ################################################################################
         
@@ -1066,7 +1085,7 @@ def generate_pdf():
         ################################################################################
 
         c.drawString(400, height - 240, "เลขที่:")
-        c.line(440, height - 240 - 2, 510, height - 240 - 2)
+        c.line(440, height - 240 - 2, 540, height - 240 - 2)
 
         ################################################################################
 
@@ -1074,12 +1093,12 @@ def generate_pdf():
         c.drawString(120, height - 260, title + " " + f_name + " " + l_name)
 
         # Draw a dashed line
-        c.line(120, height - 260 - 2, 240, height - 260 - 2)
+        c.line(120, height - 260 - 2, 260, height - 260 - 2)
 
-        c.drawString(240, height - 260, "วิชา:")
-        c.drawString(300, height - 260, subject)
+        c.drawString(300, height - 260, "วิชา:")
+        c.drawString(360, height - 260, subject)
 
-        c.line(300, height - 260 - 2, 450, height - 260 - 2)
+        c.line(360, height - 260 - 2, 540, height - 260 - 2)
 
         ################################################################################
 
@@ -1087,12 +1106,12 @@ def generate_pdf():
         c.drawString(120, height - 280, "ค่าเรียน" +
                      " " + times + " " + "ครั้ง")
 
-        c.line(120, height - 280 - 2, 240, height - 280 - 2)
+        c.line(120, height - 280 - 2, 260, height - 280 - 2)
 
-        c.drawString(240, height - 280, "จำนวนเงิน:")
-        c.drawString(300, height - 280, payment + " " + "บาท")
+        c.drawString(300, height - 280, "จำนวนเงิน:")
+        c.drawString(360, height - 280, payment + " " + "บาท")
 
-        c.line(300, height - 280 - 2, 450, height - 280 - 2)
+        c.line(360, height - 280 - 2, 540, height - 280 - 2)
 
         c.setFont("THSarabunNEW", 16)
         c.drawCentredString(width / 2, height - 460,
@@ -1112,7 +1131,7 @@ def generate_pdf():
         ################################################################################
 
         c.drawString(300, height - 400, "ผู้รับเงิน:")
-        c.line(350, height - 400 - 2, 500, height - 400 - 2)
+        c.line(350, height - 400 - 2, 540, height - 400 - 2)
 
         ################################################################################
 

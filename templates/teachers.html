@@ -73,7 +73,9 @@
             </tbody>
         </table>
 
-        <h4>จำนวนเงินที่ต้องจ่ายให้ครูเดือนนี้: {{ total_amount }}</h4>
+        {% for total_monthly_payment in total_monthly_payments %}
+            <h4>ที่จ่ายให้เดือน {{ total_monthly_payment.month_year }}: {{ total_monthly_payment.total_amount }}</h4>
+        {% endfor %}
     </div>
 </div>
 
