@@ -4,7 +4,7 @@ from io import BytesIO
 import os
 from flask import Flask, Response, request, redirect, render_template, url_for, flash, jsonify, send_from_directory, send_file
 import sqlite3
-import pandas as pd
+import openpyxl
 
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
@@ -20,10 +20,12 @@ app.secret_key = os.urandom(24)
 DATABASE = './database.db'
 UPLOAD_FOLDER = './uploads/'
 
+
 def get_db():
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
     return conn
+
 
 def create_database():
 
@@ -330,7 +332,7 @@ def add(category):
             title = request.form['title']
             f_name = request.form['f_name']
             l_name = request.form['l_name']
-            
+
             f_eng_name = request.form['f_eng_name']
             l_eng_name = request.form['l_eng_name']
 
@@ -401,7 +403,7 @@ def add(category):
 
             flash("เพิ่มวิชาสําเร็จ", "success")
             return redirect(url_for('subjects'))
-        
+
         elif category == "level":
 
             level_name = request.form['level_name']
@@ -449,7 +451,7 @@ def add(category):
 
             flash("เช็คชื่อเรียบร้อยแล้ว", "success")
             return redirect(url_for('students'))
-        
+
         elif category == "registration":
 
             student_id = request.args.get('student_id')
@@ -463,11 +465,11 @@ def add(category):
             if int(times) % 4 != 0:
                 flash("จํานวนครั้งที่สอนต้องหาร 4 ลงตัว", "warning")
                 return redirect(url_for('registrations', student_id=student_id))
-            
+
             db = get_db()
             c = db.cursor()
             c.execute("INSERT INTO registrations (student_id, subject_id, level_id, teacher_id, time_left, times, schedule) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                    (student_id, subject_id, level_id, teacher_id, times, times, schedule))
+                      (student_id, subject_id, level_id, teacher_id, times, times, schedule))
             db.commit()
             db.close()
 
@@ -477,6 +479,7 @@ def add(category):
 
     else:
         return redirect(url_for('students'))
+
 
 @app.route("/update/<category>", methods=['GET', 'POST'])
 def update(category):
@@ -535,9 +538,10 @@ def update(category):
             db.close()
 
             return redirect(url_for('teachers'))
-        
+
     else:
         return redirect(url_for('students'))
+
 
 @app.route("/delete/<category>", methods=['GET', 'POST'])
 def delete(category=None):
@@ -630,6 +634,7 @@ def delete(category=None):
         elif category == "price":
 
             price_id = request.args.get('price_id')
+            subject_id = request.args.get('subject_id')
 
             db = get_db()
             c = db.cursor()
@@ -691,6 +696,7 @@ def registrations(student_id):
 
     return render_template('registrations.html', student=student, rows=rows, subjects=subjects, teachers=teachers)
 
+
 @app.route('/get_prices/<int:subject_id>', methods=['GET', 'POST'])
 def get_levels(subject_id):
     db = get_db()
@@ -705,8 +711,9 @@ def get_levels(subject_id):
 
     # Convert rows to a list of dictionaries
     levels = [{"level_id": row[0], "level_name": row[1]} for row in rows]
-    
+
     return jsonify(levels)
+
 
 def add_attendance(student_id, subject_id, level_id, attend_date: date):
 
@@ -753,7 +760,7 @@ def add_attendance(student_id, subject_id, level_id, attend_date: date):
 
     # Calculate money that teacher will get
     teacher_id = row[0]
-    subject_price = row[1] 
+    subject_price = row[1]
     teacher_payment_ratio = row[2]
 
     money = (subject_price * teacher_payment_ratio) // 4
@@ -762,7 +769,7 @@ def add_attendance(student_id, subject_id, level_id, attend_date: date):
     db = get_db()
     c = db.cursor()
     c.execute("INSERT INTO payments (teacher_id, attendance_id, student_id, subject_id, level_id, amount) VALUES (?, ?, ?, ?, ?, ?)",
-                (teacher_id, last_attendance_id, student_id, subject_id, level_id, money))
+              (teacher_id, last_attendance_id, student_id, subject_id, level_id, money))
     db.commit()
     db.close()
 
@@ -773,7 +780,7 @@ def delete_attendance(student_id, subject_id, level_id, attendance_id):
     db = get_db()
     c = db.cursor()
     c.execute("DELETE FROM payments WHERE attendance_id = ?",
-                (attendance_id,))
+              (attendance_id,))
     db.commit()
     db.close()
 
@@ -788,6 +795,7 @@ def delete_attendance(student_id, subject_id, level_id, attendance_id):
     db.commit()
     db.close()
 
+
 @app.route("/attendances/<student_id>", methods=['GET', 'POST'])
 def attendances(student_id):
 
@@ -800,7 +808,8 @@ def attendances(student_id):
             attendance_date = datetime.strptime(attendance_date, '%d/%m/%Y')
 
             # Convert year to Georgian year
-            attendance_date = attendance_date.replace(year=attendance_date.year - 543).date()
+            attendance_date = attendance_date.replace(
+                year=attendance_date.year - 543).date()
 
             # Get subject_id and level_id from registrations according to student_id
             db = get_db()
@@ -813,7 +822,7 @@ def attendances(student_id):
             for row in rows:
                 add_attendance(student_id, row[0], row[1], attendance_date)
 
-        return jsonify({'message': 'Success'}) 
+        return jsonify({'message': 'Success'})
 
     # Get student
     db = get_db()
@@ -878,6 +887,7 @@ def prices(subject_id):
 
     return render_template('prices.html', prices=prices, subject=subject, levels=levels)
 
+
 @app.route("/payments/<teacher_id>", methods=['GET', 'POST'])
 def payments(teacher_id):
 
@@ -918,8 +928,9 @@ def payments(teacher_id):
     """, (teacher_id,))
     monthly_payments = c.fetchall()
     db.close()
-    
+
     return render_template('payments.html', payments=payments, monthly_payments=monthly_payments, teacher=teacher)
+
 
 @app.route("/receipt/<student_id>/<subject_id>/<level_id>", methods=['GET', 'POST'])
 def receipt(student_id, subject_id, level_id):
@@ -955,12 +966,14 @@ def receipt(student_id, subject_id, level_id):
         flash("จำนวนครั้งหาร 4 ไม่ลงตัว", "warning")
         return redirect(url_for('students'))
 
+
 @app.route('/export_excel')
 def export_excel():
     # Connect to your SQLite database
     conn = sqlite3.connect('database.db')
-    
-    # Create a dictionary to hold DataFrames
+    cursor = conn.cursor()
+
+    # Create a dictionary to hold table queries
     tables = {
         'students': 'SELECT * FROM students',
         'teachers': 'SELECT * FROM teachers',
@@ -971,22 +984,43 @@ def export_excel():
         'prices': 'SELECT * FROM prices',
         'payments': 'SELECT * FROM payments',
     }
-    
+
     # Create a BytesIO buffer to hold the Excel file in memory
     output = BytesIO()
-    
-    # Create an Excel writer object
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        for sheet_name, query in tables.items():
-            # Query the data
-            df = pd.read_sql_query(query, conn)
-            
-            # Write the DataFrame to a sheet in the Excel file
-            df.to_excel(writer, sheet_name=sheet_name, index=False)
-    
-    # Close the connection
+
+    # Create a new Excel workbook
+    workbook = openpyxl.Workbook()
+
+    # Remove the default sheet created by openpyxl
+    default_sheet = workbook.active
+    workbook.remove(default_sheet)
+
+    for sheet_name, query in tables.items():
+        # Execute the query and fetch data
+        cursor.execute(query)
+        rows = cursor.fetchall()
+
+        # Get column names from the cursor
+        columns = [description[0] for description in cursor.description]
+
+        # Create a new sheet in the workbook
+        sheet = workbook.create_sheet(title=sheet_name)
+
+        # Write the column headers to the first row
+        for col_num, column_title in enumerate(columns, 1):
+            sheet.cell(row=1, column=col_num, value=column_title)
+
+        # Write the data rows
+        for row_num, row_data in enumerate(rows, 2):
+            for col_num, cell_data in enumerate(row_data, 1):
+                sheet.cell(row=row_num, column=col_num, value=cell_data)
+
+    # Close the database connection
     conn.close()
-    
+
+    # Save the workbook to the BytesIO buffer
+    workbook.save(output)
+
     # Prepare the response
     output.seek(0)
     return Response(
@@ -995,50 +1029,70 @@ def export_excel():
         headers={"Content-Disposition": "attachment;filename=output.xlsx"}
     )
 
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'xlsx'}
+
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
         flash('No file part')
         return redirect(request.url)
-    
+
     file = request.files['file']
-    
+
     if file.filename == '':
         flash('No selected file')
         return redirect(request.url)
-    
+
     if file and allowed_file(file.filename):
         file_path = os.path.join(UPLOAD_FOLDER, file.filename)
         file.save(file_path)
-        
+
         # Import the file into the SQLite database
         import_excel_to_sqlite(file_path, 'database.db')
-        
+
         flash('File successfully uploaded and imported')
         return redirect(url_for('students'))
-    
+
     flash('Invalid file format')
     return redirect(request.url)
 
+
 def import_excel_to_sqlite(excel_file_path, sqlite_db_path):
-    # Read the Excel file
-    xls = pd.ExcelFile(excel_file_path)
-    
+    # Load the Excel file
+    wb = openpyxl.load_workbook(excel_file_path, data_only=True)
+
     # Connect to the SQLite database
     conn = sqlite3.connect(sqlite_db_path)
-    
+    cursor = conn.cursor()
+
     # Loop through each sheet in the Excel file
-    for sheet_name in xls.sheet_names:
-        df = pd.read_excel(xls, sheet_name=sheet_name)
-        
-        # Write the DataFrame to the SQLite database
-        df.to_sql(sheet_name, conn, if_exists='replace', index=False)
-    
-    # Close the connection
+    for sheet_name in wb.sheetnames:
+        sheet = wb[sheet_name]
+
+        # Get the headers from the first row
+        headers = [cell.value for cell in sheet[1]]
+
+        # Create a table with the same name as the sheet if it doesn't exist
+        column_definitions = ', '.join(
+            [f'"{header}" TEXT' for header in headers])
+        create_table_query = f'CREATE TABLE IF NOT EXISTS "{sheet_name}" ({column_definitions})'
+        cursor.execute(create_table_query)
+
+        # Insert rows into the SQLite table
+        for row in sheet.iter_rows(min_row=2, values_only=True):
+            placeholders = ', '.join(['?' for _ in headers])
+
+            # Using INSERT OR IGNORE to avoid UNIQUE constraint violations
+            insert_query = f'INSERT OR IGNORE INTO "{sheet_name}" VALUES ({placeholders})'
+            cursor.execute(insert_query, row)
+
+    # Commit and close the connection
+    conn.commit()
     conn.close()
+
 
 @app.route('/generate-pdf', methods=['GET', 'POST'])
 def generate_pdf():
@@ -1068,7 +1122,8 @@ def generate_pdf():
         c.drawCentredString(width / 2, height - 120, "RECEIPT")
 
         c.setFont("THSarabunNEW", 20)
-        c.drawCentredString(width / 2, height - 140, "โรงเรียนศุภนิจการดนตรีและภาษา Supanit Music & Language School")
+        c.drawCentredString(width / 2, height - 140,
+                            "โรงเรียนศุภนิจการดนตรีและภาษา Supanit Music & Language School")
 
         c.setFont("THSarabunNEW", 10)
         c.drawCentredString(width / 2, height - 160,
@@ -1078,7 +1133,7 @@ def generate_pdf():
         c.setFont("THSarabunNEW", 16)
 
         ################################################################################
-        
+
         c.drawString(400, height - 220, "วันที่:")
         c.drawString(450, height - 220, date.today().strftime("%d/%m/%Y"))
 
@@ -1117,7 +1172,6 @@ def generate_pdf():
         c.drawCentredString(width / 2, height - 460,
                             "ใบเสร็จรับเงินที่ถูกต้อง จะต้องมีลายเซ็นของเจ้าหน้าที่ผู้รับมอบอำนาจ และประทับตราโรงเรียน")
 
-
         ################################################################################
 
         c.drawString(60, height - 320, "รับชำระ:")
@@ -1127,7 +1181,7 @@ def generate_pdf():
 
         draw_checkbox(c, 300, height - 320, size=12, checked=False)
         c.drawString(320, height - 320, "เงินสด/Cash")
-        
+
         ################################################################################
 
         c.drawString(300, height - 400, "ผู้รับเงิน:")
@@ -1146,6 +1200,7 @@ def generate_pdf():
 
         return send_file(buffer, as_attachment=True, download_name='receipt.pdf', mimetype='application/pdf')
 
+
 def draw_checkbox(c: canvas.Canvas, x, y, size=10, checked=False):
 
     c.setDash([])
@@ -1159,8 +1214,9 @@ def draw_checkbox(c: canvas.Canvas, x, y, size=10, checked=False):
         c.setLineWidth(1.5)
         c.line(x, y, x + size, y + size)
         c.line(x, y + size, x + size, y)
-    
+
     c.setDash(1, 2)
+
 
 def open_browser():
     webbrowser.open_new('http://127.0.0.1:5000/')

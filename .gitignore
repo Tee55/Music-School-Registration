@@ -2,9 +2,11 @@ __pycache__/
 env/
 build/
 dist/
+uploads/
 *.db
 PyInstaller/
 *.log
 *.spec
 *.exe
+*.xlsx
 static/
