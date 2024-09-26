@@ -5,6 +5,7 @@ import os
 from flask import Flask, Response, request, redirect, render_template, url_for, flash, jsonify, send_from_directory, send_file
 import sqlite3
 import openpyxl
+import re
 
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
@@ -20,6 +21,7 @@ app.secret_key = os.urandom(24)
 DATABASE = './database.db'
 UPLOAD_FOLDER = './uploads/'
 
+DATE_PATTERN = re.compile(r'^(0[1-9]|[12][0-9]|3[01])/(0[1-9]|1[0-2])/\d{4}$')
 
 def get_db():
     conn = sqlite3.connect(DATABASE)
@@ -41,7 +43,6 @@ def create_database():
               n_name TEXT,
               address TEXT,
               dob TEXT,
-              age INTEGER,
               job TEXT,
               email TEXT,
               phone_num TEXT,
@@ -326,7 +327,11 @@ def add(category):
             register_date = request.form['register_date']
             if not register_date:
                 flash("กรุณากรอกวันที่ลงทะเบียน", "danger")
-                return redirect(url_for('students'))
+                return redirect(request.url)
+            
+            if not DATE_PATTERN.match(register_date):
+                flash("วันที่ลงทะเบียนต้องเป็น dd/mm/yyyy", "danger")
+                return redirect(request.url)
 
             student_id = request.form['student_id']
             title = request.form['title']
@@ -342,9 +347,11 @@ def add(category):
             dob = request.form['dob']
             if not register_date:
                 flash("กรุณากรอกวันเกิด", "danger")
-                return redirect(url_for('students'))
-
-            age = request.form['age']
+                return redirect(request.url)
+            
+            if not DATE_PATTERN.match(dob):
+                flash("วันเกิดต้องเป็น dd/mm/yyyy", "danger")
+                return redirect(request.url)
 
             job = request.form['job']
             email = request.form['email']
@@ -358,8 +365,8 @@ def add(category):
 
             db = get_db()
             c = db.cursor()
-            c.execute('''INSERT INTO students (student_id, title, f_name, l_name, f_eng_name, l_eng_name, n_name, address, dob, age, job, email, phone_num, instruments, family_title, family_f_name, family_l_name, family_relationship, register_date) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', (student_id, title, f_name, l_name, f_eng_name, l_eng_name, n_name, address, dob, age, job, email, phone_num, instruments, family_title, family_f_name, family_l_name, family_relationship, register_date))
+            c.execute('''INSERT INTO students (student_id, title, f_name, l_name, f_eng_name, l_eng_name, n_name, address, dob, job, email, phone_num, instruments, family_title, family_f_name, family_l_name, family_relationship, register_date) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', (student_id, title, f_name, l_name, f_eng_name, l_eng_name, n_name, address, dob, job, email, phone_num, instruments, family_title, family_f_name, family_l_name, family_relationship, register_date))
             db.commit()
             db.close()
 
@@ -464,7 +471,7 @@ def add(category):
 
             if int(times) % 4 != 0:
                 flash("จํานวนครั้งที่สอนต้องหาร 4 ลงตัว", "warning")
-                return redirect(url_for('registrations', student_id=student_id))
+                return redirect(request.url)
 
             db = get_db()
             c = db.cursor()
@@ -660,7 +667,7 @@ def registrations(student_id):
 
     if not student:
         flash("ไม่มีนักเรียนไอดีนี้", "warning")
-        return redirect(url_for('students'))
+        return redirect(request.url)
 
     # Get all subjects and its levels
     db = get_db()
@@ -671,7 +678,7 @@ def registrations(student_id):
 
     if len(subjects) == 0:
         flash("ไม่มีรายวิชาที่สอน", "warning")
-        return redirect(url_for('students'))
+        return redirect(request.url)
 
     # Get all teachers
     db = get_db()
@@ -833,7 +840,7 @@ def attendances(student_id):
 
     if not student:
         flash("ไม่มีนักเรียนไอดีนี้", "warning")
-        return redirect(url_for('students'))
+        return redirect(request.url)
 
     # Get attendance history
     db = get_db()
@@ -944,7 +951,7 @@ def receipt(student_id, subject_id, level_id):
 
     if not student:
         flash("ไม่มีนักเรียนไอดีนี้", "warning")
-        return redirect(url_for('students'))
+        return redirect(request.url)
 
     # Get registration data
     db = get_db()
@@ -964,7 +971,7 @@ def receipt(student_id, subject_id, level_id):
         return render_template('receipt.html', data=data, payment=payment)
     else:
         flash("จำนวนครั้งหาร 4 ไม่ลงตัว", "warning")
-        return redirect(url_for('students'))
+        return redirect(request.url)
 
 
 @app.route('/export_excel')
@@ -1093,7 +1100,6 @@ def import_excel_to_sqlite(excel_file_path, sqlite_db_path):
     conn.commit()
     conn.close()
 
-
 @app.route('/generate-pdf', methods=['GET', 'POST'])
 def generate_pdf():
 
@@ -1128,7 +1134,7 @@ def generate_pdf():
         c.setFont("THSarabunNEW", 10)
         c.drawCentredString(width / 2, height - 160,
                             "888/5 หมู่ 4 ถนนวัชรพล แขวงคลองถนน เขตสายไหม กรุงเทพ 10220")
-        c.drawCentredString(width / 2, height - 170, "โทร. 02-1530775-6")
+        c.drawCentredString(width / 2, height - 170, "โทร. 02-1530775")
 
         c.setFont("THSarabunNEW", 16)
 
@@ -1177,7 +1183,7 @@ def generate_pdf():
         c.drawString(60, height - 320, "รับชำระ:")
 
         draw_checkbox(c, 120, height - 320, size=12, checked=False)
-        c.drawString(140, height - 320, "บัตรเครดิต/Credit Card")
+        c.drawString(140, height - 320, "สแกนจ่าย/Scan")
 
         draw_checkbox(c, 300, height - 320, size=12, checked=False)
         c.drawString(320, height - 320, "เงินสด/Cash")

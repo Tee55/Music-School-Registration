@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inputmask Example</title>
+
+    <!-- jQuery -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <!-- jQuery Inputmask -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.9/jquery.inputmask.min.js" integrity="sha512-F5Ul1uuyFlGnIT1dk2c4kB4DBdi5wnBJjVhL7gQlGh46Xn0VhvD8kgxLtjdZ5YN83gybk/aASUAlpdoWUjRR3g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body>
+
+    <h1>Phone Number Input Mask Example</h1>
+
+    <!-- Input field where the mask will be applied -->
+    <input type="text" id="phone" placeholder="Enter your phone number" />
+
+    <script>
+        // Initialize the input mask for the phone number field
+        $(document).ready(function() {
+            $("#phone").inputmask({
+                mask: "(999) 999-9999"   // Mask format for phone numbers
+            });
+        });
+    </script>
+
+</body>
+</html>
