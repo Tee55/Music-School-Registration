@@ -1,0 +1,36 @@
+<div class="col mb-3">
+    <label for="subject_id" class="form-label">วิชาที่จะเรียน</label>
+    <input type="text" class="form-control" id="subject_name" name="subject_name"
+    {% if registration %} value="{{ registration.subject_name }}" {% else %} value="" {% endif %}>
+</div>
+
+<div class="col mb-3">
+    <label for="price" class="form-label">ราคารวม 4 ครั้ง</label>
+    <input type="number" class="form-control" id="price" name="price"
+    {% if registration %} value="{{ registration.price }}" {% else %} value="" {% endif %}>
+</div>
+
+<div class="col mb-3">
+    <label for="teacher_id" class="form-label">อาจารย์ที่สอน</label>
+    <select class="form-select" id="teacher_id" name="teacher_id" required>
+        <option value="" disabled selected>-- เลือกอาจารย์ที่สอน --</option>
+        {% for teacher in teachers %}
+            <option value="{{ teacher.teacher_id }}"
+                {% if registration and registration.teacher_id == teacher.teacher_id %} selected {% endif %}>
+                {{ teacher.title + " " + teacher.f_thai_name + " " + teacher.l_thai_name }}
+            </option>
+        {% endfor %}
+    </select>
+</div>
+
+<div class="col mb-3">
+    <label for="times" class="form-label">จำนวนครั้งที่จะเรียน</label>
+    <input type="number" class="form-control" id="times" name="times" min="4"
+    {% if registration %} value="{{ registration.times_total }}" {% else %} value="4" {% endif %}>
+</div>
+
+<div class="col mb-3">
+    <label for="schedule" class="form-label">วันเวลาที่เรียน</label>
+    <input type="text" class="form-control" id="schedule" name="schedule"
+    {% if registration %} value="{{ registration.schedule }}" {% else %} value="" {% endif %}>
+</div>

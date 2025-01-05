@@ -1,0 +1,65 @@
+<div class="col mb-3">
+    <label for="subject_name" class="form-label">วิชาที่เรียน</label>
+    <select class="form-select" id="registration_id" name="registration_id" required>
+        <option value="" selected disabled hidden>เลือกวิชาที่เรียน</option>
+        {% for registration in registrations %}
+        <option value="{{ registration.registration_id }}">
+            {{ registration.subject_name }}
+        </option>
+        {% endfor %}
+    </select>
+</div>
+
+<div class="col mb-3">
+    <div id="dateContainer" class="mb-3">
+        <div class="input-group mb-2">
+            <input type="text" class="form-control attended_date" name="attended_date[]" placeholder="วัน/เดือน/ปี"
+                required>
+            <button type="button" id="addDateButton" class="btn btn-primary">เพิ่ม</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        initializeThaiDatepicker(".attended_date");
+
+        let dateContainer = $("#dateContainer");
+
+        // Event handler for dynamically adding new date fields
+        dateContainer.on("click", "#addDateButton", function () {
+            // Change the current "Add" button to a "Remove" button
+            $(this).removeClass("btn-primary").addClass("btn-danger remove-date").text("Remove");
+
+            // Add a new input field with an "Add" button
+            let newDateInput = `
+            <div class="input-group mb-2">
+                <input type="text" class="form-control attended_date" name="attended_date[]" placeholder="วัน/เดือน/ปี" required>
+                <button type="button" id="addDateButton" class="btn btn-primary">เพิ่ม</button>
+            </div>
+        `;
+
+            dateContainer.append(newDateInput);
+            initializeThaiDatepicker(".attended_date");
+        });
+
+        // Event handler for removing a date field
+        dateContainer.on("click", ".remove-date", function () {
+            $(this).parent().remove();
+        });
+    });
+
+    // Initialize Thai datepicker
+    function initializeThaiDatepicker(selector) {
+        $.datetimepicker.setLocale('th');
+        $(selector).datetimepicker({
+            timepicker: false,
+            format: 'd/m/Y',
+            lang: 'th',
+            yearOffset: 543,
+            validateOnBlur: false,
+        });
+    }
+
+
+</script>

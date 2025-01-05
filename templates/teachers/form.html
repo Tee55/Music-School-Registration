@@ -1,0 +1,87 @@
+<div class="col-12 mb-3">
+    <label for="teacher_id" class="form-label">รหัสอาจารย์</label>
+    <input type="text" class="form-control" id="teacher_id" name="teacher_id" {% if teacher %}
+        value="{{ teacher.teacher_id }}" disabled {% endif %}>
+</div>
+
+<div class="row mb-3">
+    <div class="col mb-3">
+        <label for="title" class="form-label">คำนำหน้า</label>
+        <select class="form-select" id="title" name="title">
+            {% for option in ["นาย", "นาง", "นางสาว"] %}
+            <option value="{{ option }}" {% if teacher and teacher.title==option %} selected {% endif %}>
+                {{ option }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="col mb-3">
+        <label for="f_thai_name" class="form-label">ชื่อไทย</label>
+        <input type="text" class="form-control" id="f_thai_name" name="f_thai_name" {% if teacher %}
+            value="{{ teacher.f_thai_name }}" {% endif %}>
+    </div>
+
+    <div class="col mb-3">
+        <label for="l_thai_name" class="form-label">นามสกุลไทย</label>
+        <input type="text" class="form-control" id="l_thai_name" name="l_thai_name" {% if teacher %}
+            value="{{ teacher.l_thai_name }}" {% endif %}>
+    </div>
+
+    <div class="col mb-3">
+        <label for="f_eng_name" class="form-label">Name</label>
+        <input type="text" class="form-control" id="f_eng_name" name="f_eng_name" {% if teacher %}
+            value="{{ teacher.f_eng_name }}" {% endif %}>
+    </div>
+
+    <div class="col mb-3">
+        <label for="l_eng_name" class="form-label">Surname</label>
+        <input type="text" class="form-control" id="l_eng_name" name="l_eng_name" {% if teacher %}
+            value="{{ teacher.l_eng_name }}" {% endif %}>
+    </div>
+
+    <div class="col mb-3">
+        <label for="n_name" class="form-label">ชื่อเล่น</label>
+        <input type="text" class="form-control" id="n_name" name="n_name" {% if teacher %} value="{{ teacher.n_name }}"
+            {% endif %}>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col mb-3">
+        <label for="email" class="form-label">อีเมล</label>
+        <input type="email" class="form-control" id="email" name="email" {% if teacher %} value="{{ teacher.email }}" {%
+            endif %}>
+    </div>
+
+    <div class="col mb-3">
+        <label for="phone_num" class="form-label">เบอร์โทร</label>
+        <input type="tel" class="form-control" id="phone_num" name="phone_num" {% if teacher %}
+            value="{{ teacher.phone_num }}" {% endif %}>
+    </div>
+</div>
+
+<div class="col mb-3">
+    <label for="payment_ratio" class="form-label">อัตราค่าสอนที่ได้:
+        <span id="payment_ratio_text">{% if teacher %} {{ teacher.payment_ratio * 100 }} {% endif %}</span>
+    </label>
+    <input type="range" class="form-range" id="payment_ratio" name="payment_ratio" min="0" max="1" step="0.1" {% if
+        teacher %} value="{{ teacher.payment_ratio }}" {% else %} value="0" {% endif %}>
+</div>
+
+<script>
+    $(document).ready(function () {
+        initThaiDatepicker("#dob");
+    });
+
+    function initThaiDatepicker(selector) {
+        $.datetimepicker.setLocale('th');
+        $(selector).attr('readonly', true).addClass('date-readonly').datetimepicker({
+            timepicker: false,
+            format: 'd/m/Y',
+            lang: 'th',
+            yearOffset: 543,
+            validateOnBlur: false,
+        });
+    }
+</script>

@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="row">
+    <div id="content" class="col p-3">
+
+        <h2>ประวัติการลงวิชาของ {{ student.title + " " + student.f_thai_name + " " + student.l_thai_name }}</h2>
+
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add_registration">ลงวิชาเพิ่ม</button>
+
+        <div class="modal fade" id="add_registration" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <form id="registration_form"
+                        action="{{ url_for('registrations.manage_registrations', student_id=student.student_id) }}"
+                        method="post" enctype="multipart/form-data">
+                        <div class="modal-header">
+                            <h5 class="modal-title">ข้อมูลที่จะลง</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+
+                        <div class="modal-body">
+                            {% include 'registrations/form.html' %}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+                            <button type="submit" class="btn btn-primary">เพิ่ม</button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+
+        <table id="registration_table">
+            <thead>
+                <tr>
+                    <th>id</th>
+                    <th>ชื่อวิชา</th>
+                    <th>อาจารย์ที่สอน</th>
+                    <th>จำนวนครั้งที่เรียน/ทั้งหมด</th>
+                    <th>วันเวลาที่เรียน</th>
+                    <th>ดูใบเสร็จ</th>
+                    <th>ลบ</th>
+                </tr>
+            </thead>
+
+
+            <tbody>
+
+                {% for registration in registrations %}
+                <tr>
+                    <td>{{ registration.registration_id }}</td>
+                    <td>
+                        <a
+                            href="{{ url_for('registrations.registration_detail', registration_id=registration.registration_id) }}">
+                            {{ registration.subject_name}}
+                        </a>
+                    </td>
+                    <td>{{ registration.teacher.title + " " + registration.teacher.f_thai_name + " " + registration.teacher.l_thai_name }}</td>
+                    <td>{{ registration.count_attendances() }} / {{ registration.times_total }}</td>
+                    <td>{{ registration.schedule }}</td>
+                    <td>
+                        <form
+                            action="{{ url_for('registrations.receipt_form', registration_id=registration.registration_id) }}"
+                            method="POST" style="display:inline;">
+                            <button class="btn btn-primary">
+                                ใบเสร็จ
+                            </button>
+                        </form>
+                    </td>
+
+                    <td>
+                        <form
+                            action="{{ url_for('registrations.delete_registration', registration_id=registration.registration_id) }}"
+                            method="POST" style="display:inline;">
+                            <button type="submit" class="btn btn-danger"
+                                onclick="return confirm('Are you sure you want to delete this registration?');">
+                                ลบ
+                            </button>
+                        </form>
+                    </td>
+
+                </tr>
+                {% endfor %}
+
+            </tbody>
+
+
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+    $(document).ready(function () {
+        // Initialize DataTable
+        $('#registration_table').DataTable();
+
+        // Form submission validation for 'times' input
+        $('#registration_form').on('submit', function (e) {
+            const timesValue = parseInt($('#times').val(), 10);
+            const priceValue = parseInt($('#price').val(), 10);
+
+            // Check if the value is divisible by 4
+            if (isNaN(timesValue) || timesValue % 4 !== 0) {
+                e.preventDefault(); // Prevent form submission
+                $('#times').addClass('is-invalid'); // Add invalid style
+                if (!$('#times-warning').length) {
+                    // Add feedback message if not already present
+                    $('#times').after('<div id="times-warning" class="invalid-feedback">ต้องหาร 4 ลงตัว</div>');
+                }
+            } else {
+                // If valid, remove any previous warnings
+                $('#times').removeClass('is-invalid');
+                $('#times-warning').remove();
+            }
+
+            // Check if the value is divisible by 4
+            if (isNaN(priceValue) || priceValue % 4 !== 0) {
+                e.preventDefault(); // Prevent form submission
+                $('#price').addClass('is-invalid'); // Add invalid style
+                if (!$('#price-warning').length) {
+                    // Add feedback message if not already present
+                    $('#price').after('<div id="price-warning" class="invalid-feedback">ต้องหาร 4 ลงตัว</div>');
+                }
+            } else {
+                // If valid, remove any previous warnings
+                $('#price').removeClass('is-invalid');
+                $('#price-warning').remove();
+            }
+        });
+    });
+</script>
+{% endblock %}

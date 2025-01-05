@@ -5,28 +5,30 @@
 <div class="row">
     <div id="content" class="col p-3">
 
-        <h2>ประวัติการเงินของ {{ teacher.title + " " + teacher.f_name + " " + teacher.l_name }}</h2>
+        <h2>ประวัติการเงินของ {{ teacher.title + " " + teacher.f_thai_name + " " + teacher.l_thai_name }} ในเดือนนี้</h2>
         <table id="payment_table">
             <thead>
                 <tr>
                     <th>นักเรียน</th>
                     <th>วิชา</th>
-                    <th>ระดับ</th>
                     <th>จำนวน</th>
-                    <th>วันที่สอน</th>
+                    <th>วันที่สอน (วัน/เดือน/ปี)</th>
                 </tr>
             </thead>
 
 
             <tbody>
 
-                {% for payment in payments %}
+                {% for payment in payment_breakdown %}
                 <tr>
-                    <td>{{ payment.f_name + " " + payment.l_name + " " }} ({{ payment.n_name }})</td>
+                    <td>{{ payment.student_name }}</td>
                     <td>{{ payment.subject_name }}</td>
-                    <td>{{ payment.level_name }}</td>
-                    <td>{{ payment.amount }}</td>
-                    <td>{{ payment.date }}</td>
+                    <td>{{ payment.calculated_payment }}</td>
+                    <td>
+                        {% for date in payment.attendance_dates %}
+                            {{ date.strftime('%d/%m/%Y') }}<br>
+                        {% endfor %}
+                    </td>
                 </tr>
                 {% endfor %}
 

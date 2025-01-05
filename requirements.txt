@@ -1,0 +1,7 @@
+Flask
+openpyxl
+Pillow
+reportlab
+Flask-SQLAlchemy
+Flask-Migrate
+pyinstaller

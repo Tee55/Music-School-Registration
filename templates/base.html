@@ -16,7 +16,7 @@
             <div class="container-fluid">
 
                 <!-- Brand -->
-                <a class="navbar-brand" href="/students">RES</a>
+                <a class="navbar-brand" href="/students">HOME</a>
 
                 <!-- Support content button toggle -->
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
@@ -35,25 +35,17 @@
                         <li class="nav-item">
                             <a class="nav-link active" aria-current="page" href="/teachers">รายชื่ออาจารย์</a>
                         </li>
-                
-                        <li class="nav-item">
-                            <a class="nav-link active" aria-current="page" href="/subjects">รายวิชาที่สอน</a>
-                        </li>
-                
-                        <li class="nav-item">
-                            <a class="nav-link active" aria-current="page" href="/levels">ระดับที่สอน</a>
-                        </li>
                     </ul>
                     
                     <!-- Save button moved outside and aligned to the right -->
                     <ul class="navbar-nav mb-2 mb-lg-0 ms-auto">
 
                         <li class="nav-item">
-                            <a class="nav-link active" aria-current="page" href="/export_excel">ส่งออกเป็น Excel</a>
+                            <a class="nav-link active" aria-current="page" href="/files/export_excel">Export</a>
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link active" aria-current="page" data-bs-toggle="modal" data-bs-target="#upload_file">โหลด Excel ไฟล์ใส่ Database</a>
+                            <a class="nav-link active" aria-current="page" data-bs-toggle="modal" data-bs-target="#import_excel">Import</a>
                         </li>
                     </ul>
                 </div>
@@ -62,10 +54,10 @@
         </nav>
     </section>
 
-    <div class="modal fade" id="upload_file" tabindex="-1">
+    <div class="modal fade" id="import_excel" tabindex="-1">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
-                <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
+                <form action="{{ url_for('files.import_excel') }}" method="post" enctype="multipart/form-data">
                     <div class="modal-header">
                         <h5 class="modal-title">ใส่ไฟล์ Excel</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>

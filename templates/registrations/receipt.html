@@ -9,30 +9,30 @@
                 ข้อมูลใบเสร็จ
             </div>
             <div class="card-body">
-                <form action="/generate-pdf" method="post">
+                <form action="{{ url_for('files.generate_pdf') }}" method="post" enctype="multipart/form-data">
 
                     <div class="col-12 mb-3">
                         <label for="student_id" class="form-label">รหัสนักเรียน</label>
                         <input type="text" class="form-control" id="student_id" name="student_id"
-                            value="{{data.student_id}}" readonly>
+                            value="{{registration.student_id}}" readonly>
                     </div>
 
                     <div class="row mb-3">
                         <div class="col mb-3">
                             <label for="title" class="form-label">คำนำหน้า</label>
-                            <input type="text" class="form-control" id="title" name="title" value="{{data.title}}"
+                            <input type="text" class="form-control" id="title" name="title" value="{{student.title}}"
                                 readonly>
                         </div>
 
                         <div class="col mb-3">
                             <label for="f_name" class="form-label">ชื่อ</label>
-                            <input type="text" class="form-control" id="f_name" name="f_name" value="{{data.f_name}}"
+                            <input type="text" class="form-control" id="f_name" name="f_name" value="{{student.f_thai_name}}"
                                 readonly>
                         </div>
 
                         <div class="col mb-3">
                             <label for="l_name" class="form-label">นามสกุล</label>
-                            <input type="text" class="form-control" id="l_name" name="l_name" value="{{data.l_name}}"
+                            <input type="text" class="form-control" id="l_name" name="l_name" value="{{student.l_thai_name}}"
                                 readonly>
                         </div>
 
@@ -41,12 +41,12 @@
                     <div class="col-12 mb-3">
                         <label for="subject" class="form-label">วิชาที่จะเรียน</label>
                         <input type="text" class="form-control" id="subject" name="subject"
-                            value="{{data.subject_name}}" readonly>
+                            value="{{registration.subject_name}}" readonly>
                     </div>
 
                     <div class="col-12 mb-3">
                         <label for="times" class="form-label">จำนวนครั้งที่จะเรียน</label>
-                        <input type="number" class="form-control" id="times" name="times" value="{{data.times}}"
+                        <input type="number" class="form-control" id="times" name="times" value="{{registration.times_total}}"
                             readonly>
                     </div>
 

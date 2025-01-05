@@ -4,30 +4,31 @@
 
 <div class="row">
     <div id="content" class="col p-3">
-
+        <!-- Add Student Button -->
         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add_student">เพิ่มนักเรียน</button>
 
+        <!-- Modal for Adding Student -->
         <div class="modal fade" id="add_student" tabindex="-1">
             <div class="modal-dialog modal-xl">
                 <div class="modal-content">
-                    <form action="/add/student" method="post" enctype="multipart/form-data">
+                    <form action="{{ url_for('students.add_student') }}" method="post" enctype="multipart/form-data">
                         <div class="modal-header">
                             <h5 class="modal-title">เพิ่มนักเรียน</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
-                            {% include 'student_form.html' %}
+                            {% include 'students/form.html' %}
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
                             <button type="submit" class="btn btn-primary">เพิ่ม</button>
                         </div>
                     </form>
-
                 </div>
             </div>
         </div>
 
+        <!-- Student Table -->
         <table id="student_table">
             <thead>
                 <tr>
@@ -35,62 +36,42 @@
                     <th>ชื่อ</th>
                     <th>Email</th>
                     <th>เบอร์โทร</th>
-
                     <th>วิชาที่ลงไว้</th>
-
-                    <th>เช็คชื่อ</th>
-
                     <th>ประวัติเข้าเรียน</th>
                     <th>ลบ</th>
                 </tr>
             </thead>
-
-
             <tbody>
-
                 {% for student in students %}
                 <tr>
                     <td>{{ student.student_id }}</td>
                     <td>
                         <a href="/students/{{ student.student_id }}">
-                            {{ student.f_name + " " + student.l_name + " " }} ({{ student.n_name }})
+                            {{ student.f_thai_name }} {{ student.l_thai_name }} ({{ student.n_name }})
                         </a>
                     </td>
-
                     <td>{{ student.email }}</td>
                     <td>{{ student.phone_num }}</td>
-
                     <td>
                         <a href="/registrations/{{ student.student_id }}">
                             <button class="btn btn-success">ดูวิชาที่ลงไว้</button>
                         </a>
                     </td>
-
-                    <td>
-                        <input class="form-check-input attendance" type="checkbox" id="attendance"
-                            data-student-id="{{ student.student_id }}" {% if student.is_attended==1 %} checked="" if
-                            student.is_attended==1 %} checked disabled {% endif %}>
-                        {{ student.attendance_id }}
-
-                    </td>
-
                     <td>
                         <a href="/attendances/{{ student.student_id }}">
                             <button class="btn btn-success">ดูประวัติเข้าเรียน</button>
                         </a>
                     </td>
-
                     <td>
-                        <a href="/delete/student?student_id={{ student.student_id }}">
-                            <button class="btn btn-danger">ลบ</button>
-                        </a>
+                        <form action="{{ url_for('students.delete_student', student_id=student.student_id) }}" method="POST" style="display:inline;">
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this student?');">
+                                ลบ
+                            </button>
+                        </form>
                     </td>
                 </tr>
                 {% endfor %}
-
             </tbody>
-
-
         </table>
     </div>
 </div>
@@ -100,37 +81,8 @@
 {% block scripts %}
 <script>
     $(document).ready(function () {
+        // Initialize DataTable
         $('#student_table').DataTable();
-        
-        $('.attendance').change(function () {
-            var student_id = $(this).data('student-id');
-            let isChecked = $(this).is(':checked');
-
-            if (isChecked) {
-                $.ajax({
-                    type: "POST",
-                    url: "/add/attendance",
-                    data: {
-                        student_id: student_id,
-                    },
-                    success: function (data) {
-                        location.reload();
-                    }
-                });
-            } else {
-                $.ajax({
-                    type: "POST",
-                    url: "/delete/attendance",
-                    data: {
-                        student_id: student_id,
-                    },
-                    success: function (data) {
-                        location.reload();
-                    }
-                });
-            }
-
-        });
     });
 </script>
 {% endblock %}

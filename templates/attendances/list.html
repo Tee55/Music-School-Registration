@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div id="content" class="col p-3">
+        <h2>
+            ประวัติการมาเข้าเรียนของ
+            {{ student.title + " " + student.f_thai_name + " " + student.l_thai_name }} ({{ student.n_name }})
+        </h2>
+
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAttendanceModal">
+            เพิ่มประวัติ
+        </button>
+
+        <!-- Add Attendance Modal -->
+        <div class="modal fade" id="addAttendanceModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form id="attendance_form"
+                        action="{{ url_for('attendances.manage_attendances', student_id=student.student_id) }}"
+                        method="post" enctype="multipart/form-data">
+                        <div class="modal-header">
+                            <h5 class="modal-title">เพิ่มประวัติ</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            {% include 'attendances/form.html' %}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+                            <button id="submitAttendance" type="submit" class="btn btn-primary">เพิ่ม</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance History Table -->
+        <table id="attendanceHistoryTable">
+            <thead>
+                <tr>
+                    <th>วิชาที่เรียน</th>
+                    <th>วันที่มา</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for registration in registrations %}
+                <tr>
+                    <td>{{ registration.subject_name }}</td>
+                    <td>
+                        {% for attendance in registration.attendances %}
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="mb-0 me-3">
+                                {{ attendance.date.strftime('%d/%m/%Y') }}
+                            </div>
+                            <form
+                                action="{{ url_for('attendances.delete_attendance', attendance_id=attendance.attendance_id) }}"
+                                method="POST" style="display:inline;">
+                                <button type="submit" class="btn btn-danger"
+                                    onclick="return confirm('Are you sure you want to delete this attendance?');">
+                                    ลบ
+                                </button>
+                            </form>
+                        </div>
+                        {% endfor %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function () {
+        $('#attendanceHistoryTable').DataTable();
+    });
+</script>
+{% endblock %}

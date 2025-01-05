@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col p-3">
+        <div class="card">
+            <form id="registration_form" action="{{ url_for('registrations.edit_registration', registration_id=registration.registration_id) }}" method="post" enctype="multipart/form-data">
+                <div class="card-header">
+                    ข้อมูลวิชาที่ลงไว้
+                </div>
+
+                <div class="card-body">
+                    {% include 'registrations/form.html' %}
+                </div>
+
+                <div class="card-footer">
+                    <button id="save_button" type="submit" class="btn btn-primary" style="display: none;">บันทึก</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function () {
+        const saveButton = $('#save_button');
+        const registrationForm = $('#registration_form');
+
+        // Initially hide the save button
+        saveButton.hide();
+
+        // Show the save button when there's a change in the form
+        registrationForm.on('change', function () {
+            saveButton.show();
+        });
+    });
+</script>
+{% endblock %}
